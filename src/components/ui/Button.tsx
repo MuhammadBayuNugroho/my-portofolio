@@ -17,6 +17,7 @@ export function Button({
   className,
   variant = "primary",
   size = "md",
+  asChild,
   ...props
 }: ButtonProps) {
   const baseStyles =

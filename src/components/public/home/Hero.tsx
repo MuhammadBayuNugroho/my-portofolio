@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { SITE_CONFIG } from "@/constants/site";
 import { fadeUpVariants, staggerContainerVariants } from "@/lib/animations";
@@ -18,6 +19,20 @@ export function Hero() {
         animate="visible"
         className="relative z-10 text-center px-4"
       >
+        {/* Profile Image */}
+        <motion.div
+          variants={fadeUpVariants}
+          className="relative h-28 w-28 rounded-full overflow-hidden border-2 border-border/80 shadow-soft mx-auto mb-6 bg-background-elevated"
+        >
+          <Image
+            src="/foto-utama.png"
+            alt={SITE_CONFIG.name}
+            fill
+            priority
+            className="object-cover"
+          />
+        </motion.div>
+
         {/* Availability Badge */}
         <motion.div variants={fadeUpVariants} className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-background-elevated px-4 py-1.5 text-xs text-foreground-muted shadow-soft dark:shadow-dark-soft">
           <span className="h-2 w-2 rounded-full bg-accent animate-pulse-slow" />
