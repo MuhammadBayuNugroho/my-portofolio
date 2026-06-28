@@ -1,21 +1,44 @@
+"use client";
+
+import useSWR from "swr";
+import { useAuth } from "@/hooks/use-auth";
+import { projectsApi, blogsApi, certificatesApi, contactApi } from "@/lib/api";
 import { Card } from "@/components/ui/Card";
-import { DUMMY_PROJECTS, DUMMY_BLOGS, DUMMY_CERTIFICATES, DUMMY_GALLERY } from "@/data/dummy";
 import { FolderOpen, BookOpen, Award, Image, Mail, ArrowUpRight, MessageSquare } from "lucide-react";
 
 export default function AdminDashboardPage() {
+  const { user } = useAuth();
+  
+  // Dynamic SWR Fetchers
+  const { data: projects = [] } = useSWR("projects", () => 
+    projectsApi.getAll().then((res) => res.data || [])
+  );
+  const { data: blogs = [] } = useSWR("blogs", () => 
+    blogsApi.getAll().then((res) => res.data || [])
+  );
+  const { data: certs = [] } = useSWR("certs", () => 
+    certificatesApi.getAll().then((res) => res.data || [])
+  );
+  const { data: messages = [], mutate: mutateMessages } = useSWR(user ? ["messages", user.token] : null, () => 
+    contactApi.getMessages(user!.token).then((res) => res.data || [])
+  );
+
   const stats = [
-    { label: "Total Proyek", value: DUMMY_PROJECTS.length, icon: FolderOpen, color: "text-accent" },
-    { label: "Total Blog", value: DUMMY_BLOGS.length, icon: BookOpen, color: "text-violet" },
-    { label: "Total Sertifikat", value: DUMMY_CERTIFICATES.length, icon: Award, color: "text-success" },
-    { label: "Aset Galeri", value: DUMMY_GALLERY.length, icon: Image, color: "text-warning" },
+    { label: "Total Proyek", value: projects.length, icon: FolderOpen, color: "text-accent" },
+    { label: "Total Blog", value: blogs.length, icon: BookOpen, color: "text-violet" },
+    { label: "Total Sertifikat", value: certs.length, icon: Award, color: "text-success" },
+    { label: "Aset Galeri", value: projects.filter(p => p.isGalleryOnly).length, icon: Image, color: "text-warning" },
   ];
 
-  // Realistic contact messages mock (10 messages for testing admin dashboard lists)
-  const mockMessages = [
-    { id: "m-1", senderName: "Budi Santoso", senderEmail: "budi@fintech.id", subject: "Tawaran Kerjasama Web", message: "Halo Bayu, kami tertarik untuk berdiskusi mengenai proyek redesain landing page...", createdAt: "2026-06-27T10:00:00Z" },
-    { id: "m-2", senderName: "Sarah Amalia", senderEmail: "sarah@ui.ac.id", subject: "Undangan Pembicara Talkshow", message: "Kami mengundang Anda sebagai pemateri dalam acara sharing session kepemimpinan...", createdAt: "2026-06-26T14:30:00Z" },
-    { id: "m-3", senderName: "John Doe", senderEmail: "johndoe@email.com", subject: "Project Quote Inquiry", message: "I would like to get a pricing estimate for a custom Figma design system...", createdAt: "2026-06-25T08:15:00Z" },
-  ];
+  const handleMarkRead = async (id: string) => {
+    if (!user) return;
+    try {
+      await contactApi.markRead(id, user.token);
+      mutateMessages();
+    } catch (err) {
+      alert("Gagal memperbarui status pesan.");
+    }
+  };
 
   return (
     <div className="flex flex-col gap-8">
@@ -23,7 +46,7 @@ export default function AdminDashboardPage() {
       <div>
         <h1 className="font-display text-h1 text-foreground font-bold">Dashboard</h1>
         <p className="text-xs text-foreground-muted mt-1">
-          Ikhtisar statistik konten website portofolio dan pesan masuk.
+          Ikhtisar statistik konten website portofolio dan pesan masuk langsung dari Google Spreadsheet.
         </p>
       </div>
 
@@ -52,30 +75,51 @@ export default function AdminDashboardPage() {
           </div>
 
           <div className="flex flex-col gap-4">
-            {mockMessages.map((msg) => (
-              <Card key={msg.id} className="p-5 flex flex-col gap-3" hoverEffect={false}>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="text-xs font-semibold text-foreground">{msg.senderName}</h4>
-                    <p className="text-[10px] text-foreground-subtle">{msg.senderEmail}</p>
-                  </div>
-                  <span className="text-[9px] text-foreground-subtle">
-                    {new Date(msg.createdAt).toLocaleDateString("id-ID", {
-                      day: "numeric",
-                      month: "short",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                </div>
-                <div className="border-t border-border/40 pt-2">
-                  <p className="text-xs font-semibold text-foreground mb-1">Subjek: {msg.subject}</p>
-                  <p className="text-xs text-foreground-muted line-clamp-2 leading-relaxed">
-                    {msg.message}
-                  </p>
-                </div>
+            {messages.length === 0 ? (
+              <Card className="p-8 text-center text-xs text-foreground-muted" hoverEffect={false}>
+                Tidak ada pesan masuk.
               </Card>
-            ))}
+            ) : (
+              messages.slice(0, 5).map((msg) => (
+                <Card key={msg.id} className={`p-5 flex flex-col gap-3 border ${msg.isRead ? "border-border/40" : "border-accent/40"}`} hoverEffect={false}>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-xs font-semibold text-foreground">{msg.senderName}</h4>
+                        {!msg.isRead && (
+                          <span className="bg-accent/15 text-accent text-[9px] font-bold px-1.5 py-0.5 rounded">Baru</span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-foreground-subtle">{msg.senderEmail}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] text-foreground-subtle">
+                        {new Date(msg.createdAt).toLocaleDateString("id-ID", {
+                          day: "numeric",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                      {!msg.isRead && (
+                        <button
+                          onClick={() => handleMarkRead(msg.id)}
+                          className="text-[9px] text-accent hover:underline font-bold"
+                        >
+                          Tandai Dibaca
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="border-t border-border/40 pt-2">
+                    <p className="text-xs font-semibold text-foreground mb-1">Subjek: {msg.subject}</p>
+                    <p className="text-xs text-foreground-muted leading-relaxed">
+                      {msg.message}
+                    </p>
+                  </div>
+                </Card>
+              ))
+            )}
           </div>
         </div>
 

@@ -5,14 +5,19 @@ import { motion } from "framer-motion";
 import { Container } from "../Container";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { DUMMY_SKILLS } from "@/data/dummy";
 import type { SkillCategory } from "@/types";
-import { Code2, ArrowUpRight } from "lucide-react";
+import { Code2, ArrowUpRight, Loader2 } from "lucide-react";
 import { fadeUpVariants, staggerContainerVariants, viewportOptions, staggerItemVariants } from "@/lib/animations";
 import Link from "next/link";
+import useSWR from "swr";
+import { skillsApi } from "@/lib/api";
 
 export function SkillsPreview() {
   const [activeCategory, setActiveCategory] = useState<SkillCategory | "All">("All");
+
+  const { data: skills = [], isLoading } = useSWR("skills", () =>
+    skillsApi.getAll().then((res) => res.data || [])
+  );
 
   const categories: (SkillCategory | "All")[] = [
     "All",
@@ -24,8 +29,8 @@ export function SkillsPreview() {
   ];
 
   const filteredSkills = activeCategory === "All"
-    ? DUMMY_SKILLS
-    : DUMMY_SKILLS.filter(skill => skill.category === activeCategory);
+    ? skills
+    : skills.filter(skill => skill.category === activeCategory);
 
   return (
     <section className="section-padding bg-background">
@@ -75,10 +80,15 @@ export function SkillsPreview() {
           </motion.div>
 
           {/* Skills Grid */}
-          <motion.div
-            variants={staggerContainerVariants}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
+          {isLoading ? (
+            <div className="flex justify-center py-10">
+              <Loader2 className="animate-spin text-accent" size={24} />
+            </div>
+          ) : (
+            <motion.div
+              variants={staggerContainerVariants}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+            >
             {filteredSkills.slice(0, 9).map((skill) => (
               <motion.div key={skill.id} variants={staggerItemVariants}>
                 <Card className="p-5 flex flex-col justify-between" hoverEffect={true}>
@@ -106,6 +116,7 @@ export function SkillsPreview() {
               </motion.div>
             ))}
           </motion.div>
+          )}
         </motion.div>
       </Container>
     </section>
