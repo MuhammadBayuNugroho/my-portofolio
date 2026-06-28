@@ -18,6 +18,11 @@ const GITHUB_REPO = process.env.GITHUB_REPOSITORY?.split("/")[1] ?? "";
 const nextConfig: NextConfig = {
   output: "export",
 
+  // Manually specify Turbopack workspace root
+  turbopack: {
+    root: __dirname,
+  },
+
   // Only apply basePath in production CI where GITHUB_REPOSITORY is set
   // For personal GitHub Pages (username.github.io), leave empty string
   basePath: isProd && GITHUB_REPO ? `/${GITHUB_REPO}` : "",
