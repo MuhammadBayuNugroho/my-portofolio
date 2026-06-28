@@ -6,15 +6,20 @@ import { Footer } from "@/components/public/Footer";
 import { Container } from "@/components/public/Container";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { DUMMY_SKILLS } from "@/data/dummy";
-import { Search, Cpu } from "lucide-react";
+import { Search, Cpu, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import useSWR from "swr";
+import { skillsApi } from "@/lib/api";
 
 type SkillCategoryFilter = "All" | "Frontend" | "Design" | "Backend" | "Tools" | "Soft Skills";
 
 export default function SkillsPage() {
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState<SkillCategoryFilter>("All");
+
+  const { data: skills = [], isLoading } = useSWR("skills", () =>
+    skillsApi.getAll().then((res) => res.data || [])
+  );
 
   const categories: SkillCategoryFilter[] = [
     "All",
@@ -25,7 +30,7 @@ export default function SkillsPage() {
     "Soft Skills",
   ];
 
-  const filteredSkills = DUMMY_SKILLS.filter((skill) => {
+  const filteredSkills = skills.filter((skill) => {
     const matchesSearch = skill.name.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = activeFilter === "All" || skill.category === activeFilter;
     return matchesSearch && matchesCategory;
@@ -83,7 +88,11 @@ export default function SkillsPage() {
           </div>
 
           {/* Skills Grid */}
-          {filteredSkills.length > 0 ? (
+          {isLoading ? (
+            <div className="flex justify-center py-20">
+              <Loader2 className="animate-spin text-accent" size={32} />
+            </div>
+          ) : filteredSkills.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredSkills.map((skill) => (
                 <Card key={skill.id} className="p-5 flex flex-col justify-between" hoverEffect={true}>

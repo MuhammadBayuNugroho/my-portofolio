@@ -64,6 +64,7 @@ export interface Project extends BaseEntity {
   githubUrl?: string;
   figmaUrl?: string;
   category: ProjectCategory;
+  isGalleryOnly?: boolean;
   status: ContentStatus;
   featured: boolean;
   order: number; // Sort order for display
