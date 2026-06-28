@@ -1,0 +1,25 @@
+{
+  "name": "Muhammad Bayu Nugroho",
+  "short_name": "MBN Portfolio",
+  "description": "Frontend Developer, Web Designer & Graphic Designer",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#030303",
+  "theme_color": "#030303",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "categories": ["portfolio", "design", "development"]
+}

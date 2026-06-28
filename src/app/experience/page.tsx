@@ -1,0 +1,321 @@
+"use client";
+
+import { useState } from "react";
+import { Navbar } from "@/components/public/Navbar";
+import { Footer } from "@/components/public/Footer";
+import { Container } from "@/components/public/Container";
+import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
+import { DUMMY_EXPERIENCE, DUMMY_JOURNEY } from "@/data/dummy";
+import type { ExperienceType } from "@/types";
+import { getDuration } from "@/lib/utils";
+import { Briefcase, Calendar, MapPin, CheckCircle2, Award, GraduationCap, Landmark, Heart, Compass } from "lucide-react";
+import { motion } from "framer-motion";
+
+type PageTab = "experience" | "journey";
+type JourneyFilter = "All" | "Achievement" | "Leadership" | "Career" | "Education" | "Volunteer";
+
+export default function ExperiencePage() {
+  const [activeTab, setActiveTab] = useState<PageTab>("experience");
+  
+  // Tab 1 state: Experience
+  const [activeType, setActiveType] = useState<ExperienceType | "All">("All");
+  const types: (ExperienceType | "All")[] = [
+    "All",
+    "Professional",
+    "Organizational",
+    "Volunteer",
+    "Freelance",
+  ];
+  
+  // Tab 2 state: Journey
+  const [activeJourneyFilter, setActiveJourneyFilter] = useState<JourneyFilter>("All");
+  const journeyCategories: JourneyFilter[] = [
+    "All",
+    "Achievement",
+    "Leadership",
+    "Career",
+    "Education",
+    "Volunteer",
+  ];
+
+  // Filtering Logic
+  const filteredExperience = DUMMY_EXPERIENCE.filter((exp) => {
+    return activeType === "All" || exp.type === activeType;
+  });
+
+  const filteredJourney = DUMMY_JOURNEY.filter((item) => {
+    return activeJourneyFilter === "All" || item.type === activeJourneyFilter;
+  });
+
+  // Journey Helper Icons & Colors
+  const getJourneyIcon = (type: string) => {
+    switch (type) {
+      case "Achievement":
+        return Award;
+      case "Leadership":
+        return Landmark;
+      case "Career":
+        return Briefcase;
+      case "Education":
+        return GraduationCap;
+      case "Volunteer":
+        return Heart;
+      default:
+        return Compass;
+    }
+  };
+
+  const getJourneyColor = (type: string) => {
+    switch (type) {
+      case "Achievement":
+        return "text-warning border-warning bg-warning/5";
+      case "Leadership":
+        return "text-accent border-accent bg-accent/5";
+      case "Career":
+        return "text-violet border-violet bg-violet/5";
+      case "Education":
+        return "text-success border-success bg-success/5";
+      case "Volunteer":
+        return "text-error border-error bg-error/5";
+      default:
+        return "text-foreground-muted border-border bg-background-overlay";
+    }
+  };
+
+  return (
+    <>
+      <Navbar />
+      <main className="min-h-screen bg-background py-16">
+        <Container>
+          {/* Header */}
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <h1 className="font-display text-h1 text-foreground mb-4">
+              Riwayat Pengalaman & Rekam Jejak
+            </h1>
+            <p className="text-body text-foreground-muted">
+              Eksplorasi riwayat profesional karir organisasi, serta tonggak pencapaian akademis dan kepemimpinan.
+            </p>
+          </div>
+
+          {/* Tab Switcher */}
+          <div className="flex justify-center mb-8">
+            <div className="inline-flex rounded-lg bg-background-elevated p-1 border border-border">
+              <button
+                onClick={() => setActiveTab("experience")}
+                className={`px-6 py-2.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                  activeTab === "experience"
+                    ? "bg-accent text-accent-foreground shadow-sm"
+                    : "text-foreground-muted hover:text-foreground"
+                }`}
+              >
+                Karir & Organisasi
+              </button>
+              <button
+                onClick={() => setActiveTab("journey")}
+                className={`px-6 py-2.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                  activeTab === "journey"
+                    ? "bg-accent text-accent-foreground shadow-sm"
+                    : "text-foreground-muted hover:text-foreground"
+                }`}
+              >
+                Pencapaian & Milestones
+              </button>
+            </div>
+          </div>
+
+          {/* TAB 1: EXPERIENCE */}
+          {activeTab === "experience" && (
+            <>
+              {/* Type Filter Tabs */}
+              <div className="flex flex-wrap justify-center gap-2 border-b border-border pb-6 mb-12">
+                {types.map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setActiveType(t)}
+                    className={`px-4 py-2 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
+                      activeType === t
+                        ? "bg-accent text-accent-foreground"
+                        : "text-foreground-muted hover:bg-background-elevated hover:text-foreground"
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+
+              {/* Vertical Timeline Layout */}
+              {filteredExperience.length > 0 ? (
+                <div className="relative max-w-3xl mx-auto pl-6 border-l-2 border-border/80 flex flex-col gap-10">
+                  {filteredExperience.map((exp, idx) => {
+                    const duration = getDuration(exp.startDate, exp.endDate);
+                    return (
+                      <motion.div
+                        key={exp.id}
+                        initial={{ opacity: 0, x: -15 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.4, delay: idx * 0.05 }}
+                        className="relative"
+                      >
+                        {/* Timeline Node Icon/Dot */}
+                        <span className="absolute -left-[35px] top-1.5 flex h-6.5 w-6.5 items-center justify-center rounded-full bg-background-elevated border-2 border-accent text-accent shadow-soft dark:shadow-dark-soft">
+                          <Briefcase size={12} />
+                        </span>
+
+                        {/* Card container */}
+                        <Card className="p-6" hoverEffect={true}>
+                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-4">
+                            <div>
+                              <span className="text-[10px] text-accent uppercase font-bold tracking-wider mb-1 block">
+                                {exp.type}
+                              </span>
+                              <h3 className="font-display text-h3 text-foreground font-semibold">
+                                {exp.title}
+                              </h3>
+                              <p className="text-caption text-foreground-muted font-medium">
+                                {exp.organization}
+                              </p>
+                            </div>
+
+                            {exp.isCurrent && (
+                              <Badge variant="success">Aktif Sekarang</Badge>
+                            )}
+                          </div>
+
+                          {/* Location & Time */}
+                          <div className="flex flex-wrap items-center gap-4 text-xs text-foreground-subtle mb-4">
+                            <span className="flex items-center gap-1.5">
+                              <Calendar size={14} />
+                              {duration.display}
+                            </span>
+                            {exp.location && (
+                              <span className="flex items-center gap-1.5">
+                                <MapPin size={14} />
+                                {exp.location}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Description */}
+                          <p className="text-xs text-foreground-muted leading-relaxed mb-4">
+                            {exp.description}
+                          </p>
+
+                          {/* Highlights Bullet List */}
+                          {exp.highlights.length > 0 && (
+                            <div className="border-t border-border/40 pt-4 mt-2">
+                              <span className="text-[10px] font-bold text-foreground uppercase tracking-wider block mb-2">
+                                Pencapaian Utama
+                              </span>
+                              <ul className="flex flex-col gap-2">
+                                {exp.highlights.map((highlight, hIdx) => (
+                                  <li key={hIdx} className="flex items-start gap-2 text-xs text-foreground-muted">
+                                    <CheckCircle2 size={14} className="text-accent mt-0.5 flex-shrink-0" />
+                                    <span>{highlight}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </Card>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-20">
+                  <p className="text-body-lg text-foreground-muted">Pengalaman tidak ditemukan.</p>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* TAB 2: JOURNEY */}
+          {activeTab === "journey" && (
+            <>
+              {/* Journey Filter Tabs */}
+              <div className="flex flex-wrap justify-center gap-2 border-b border-border pb-6 mb-12">
+                {journeyCategories.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setActiveJourneyFilter(cat)}
+                    className={`px-4 py-2 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
+                      activeJourneyFilter === cat
+                        ? "bg-accent text-accent-foreground"
+                        : "text-foreground-muted hover:bg-background-elevated hover:text-foreground"
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
+              {/* Journey Timeline */}
+              {filteredJourney.length > 0 ? (
+                <div className="relative max-w-3xl mx-auto pl-6 border-l-2 border-border/80 flex flex-col gap-10">
+                  {filteredJourney.map((item, idx) => {
+                    const IconComponent = getJourneyIcon(item.type);
+                    const colorClass = getJourneyColor(item.type);
+
+                    return (
+                      <motion.div
+                        key={item.id}
+                        initial={{ opacity: 0, x: -15 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.4, delay: idx * 0.05 }}
+                        className="relative"
+                      >
+                        {/* Timeline Node Dot */}
+                        <span className={`absolute -left-[35px] top-1.5 flex h-6.5 w-6.5 items-center justify-center rounded-full border-2 ${colorClass} shadow-soft dark:shadow-dark-soft`}>
+                          <IconComponent size={12} />
+                        </span>
+
+                        {/* Card Container */}
+                        <Card className={`p-6 ${item.highlight ? "border-accent/40 shadow-glow-accent" : ""}`} hoverEffect={true}>
+                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-3">
+                            <div>
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-[10px] text-foreground-subtle uppercase font-bold tracking-wider">
+                                  {item.type}
+                                </span>
+                                {item.highlight && (
+                                  <Badge variant="primary" className="text-[8px] px-1.5 py-0">Highlight</Badge>
+                                )}
+                              </div>
+                              <h3 className="font-display text-h3 text-foreground font-semibold">
+                                {item.title}
+                              </h3>
+                              <p className="text-caption text-foreground-muted font-medium">
+                                {item.organization} {item.role ? `• ${item.role}` : ""}
+                              </p>
+                            </div>
+
+                            <span className="inline-flex self-start md:self-center items-center gap-1 text-[10px] font-bold text-foreground-subtle bg-background-overlay border border-border px-2 py-0.5 rounded">
+                              <Calendar size={10} />
+                              {item.year}
+                            </span>
+                          </div>
+
+                          <p className="text-xs text-foreground-muted leading-relaxed">
+                            {item.description}
+                          </p>
+                        </Card>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-20">
+                  <p className="text-body-lg text-foreground-muted">Jalur perjalanan tidak ditemukan.</p>
+                </div>
+              )}
+            </>
+          )}
+        </Container>
+      </main>
+      <Footer />
+    </>
+  );
+}
