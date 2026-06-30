@@ -11,11 +11,11 @@ var scriptProperties = PropertiesService.getScriptProperties();
 // Konfigurasi Kredensial Admin & JWT
 var JWT_SECRET = scriptProperties.getProperty('JWT_SECRET') || 'default-super-secret-key-please-change-it-in-properties';
 var ADMIN_USERNAME = scriptProperties.getProperty('ADMIN_USERNAME') || 'admin';
-var ADMIN_PASSWORD = scriptProperties.getProperty('ADMIN_PASSWORD') || 'admin'; // Disarankan diganti segera
+var ADMIN_PASSWORD = scriptProperties.getProperty('ADMIN_PASSWORD') || 'admin123'; // Disarankan diganti segera
 
 // Konfigurasi Database & Drive
-var SPREADSHEET_ID = scriptProperties.getProperty('SPREADSHEET_ID') || '';
-var MEDIA_FOLDER_ID = scriptProperties.getProperty('MEDIA_FOLDER_ID') || ''; // Diisi dengan ID Folder Google Drive Aset
+var SPREADSHEET_ID = scriptProperties.getProperty('SPREADSHEET_ID') || '1Tyc5A29pF8Zkjt1lYktGwrQoXcTUZeSKmvqzQlr9JWc';
+var MEDIA_FOLDER_ID = scriptProperties.getProperty('MEDIA_FOLDER_ID') || '1JMRhUy7rM1y6IXULCautTwNWO5qXp-ih'; // Diisi dengan ID Folder Google Drive Aset
 
 /**
  * Mendapatkan Spreadsheet instance aktif
