@@ -160,10 +160,67 @@ export function clamp(value: number, min: number, max: number): number {
 // ─────────────────────────────────────────────────────────────────
 
 /**
- * getGoogleDriveDirectUrl — Convert Google Drive share URL to direct image URL.
- * Needed because drive.google.com/file/d/{id}/view cannot be embedded directly.
- * @example getGoogleDriveDirectUrl("https://drive.google.com/file/d/ABC123/view")
- *   → "https://drive.google.com/uc?id=ABC123&export=download"
+ * isCloudinaryUrl — Cek apakah URL berasal dari Cloudinary CDN.
+ * @example isCloudinaryUrl("https://res.cloudinary.com/...") → true
+ */
+export function isCloudinaryUrl(url: string): boolean {
+  return url.includes("res.cloudinary.com");
+}
+
+/**
+ * getCloudinaryUrl — Transform Cloudinary URL dengan parameter optimasi.
+ *
+ * Memanfaatkan Cloudinary URL-based transformations untuk:
+ * - Resize otomatis (w_, h_)
+ * - Format otomatis (f_auto) → WebP/AVIF di browser modern
+ * - Kualitas otomatis (q_auto) → ukuran file optimal
+ *
+ * @param url - URL Cloudinary asli (dari database/spreadsheet)
+ * @param options - Transformasi opsional
+ * @returns URL dengan transformasi ter-embed
+ *
+ * @example
+ * getCloudinaryUrl("https://res.cloudinary.com/mycloud/image/upload/v123/portfolio/cover.jpg")
+ * → "https://res.cloudinary.com/mycloud/image/upload/f_auto,q_auto,w_800/v123/portfolio/cover.jpg"
+ */
+export function getCloudinaryUrl(
+  url: string,
+  options: {
+    width?: number;
+    height?: number;
+    crop?: "fill" | "fit" | "crop" | "scale" | "thumb";
+    quality?: number | "auto";
+    format?: "auto" | "webp" | "avif" | "jpg" | "png";
+  } = {}
+): string {
+  if (!isCloudinaryUrl(url)) return url; // Pass-through untuk URL non-Cloudinary
+
+  const {
+    width,
+    height,
+    crop = "fill",
+    quality = "auto",
+    format = "auto",
+  } = options;
+
+  const transformations: string[] = [];
+  if (format) transformations.push(`f_${format}`);
+  if (quality) transformations.push(`q_${quality}`);
+  if (width)   transformations.push(`w_${width}`);
+  if (height)  transformations.push(`h_${height}`);
+  if (width || height) transformations.push(`c_${crop}`);
+
+  if (transformations.length === 0) return url;
+
+  // Sisipkan transformasi setelah "/upload/" dalam URL Cloudinary
+  const transformStr = transformations.join(",");
+  return url.replace("/upload/", `/upload/${transformStr}/`);
+}
+
+/**
+ * getGoogleDriveDirectUrl — Convert Google Drive share URL ke direct image URL.
+ * Dipertahankan untuk backward compatibility dengan data lama di spreadsheet.
+ * @deprecated Gunakan Cloudinary untuk upload gambar baru.
  */
 export function getGoogleDriveDirectUrl(shareUrl: string): string {
   const match = shareUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
