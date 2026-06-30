@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Outfit } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import { AuthProvider } from "@/context/auth-context";
 import "./globals.css";
 
 // ─────────────────────────────────────────────────────────────────
@@ -200,7 +201,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange={false}
         >
-          {children}
+          <AuthProvider>
+            {children}
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
