@@ -7,16 +7,22 @@ import { Footer } from "@/components/public/Footer";
 import { Container } from "@/components/public/Container";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { DUMMY_CERTIFICATES } from "@/data/dummy";
-import type { CertificateCategory } from "@/types";
-import { Search, ExternalLink, Calendar, X, Eye } from "lucide-react";
+import type { Certificate, CertificateCategory } from "@/types";
+import { Search, ExternalLink, Calendar, X, Eye, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatDate } from "@/lib/utils";
+import useSWR from "swr";
+import { certificatesApi } from "@/lib/api";
 
 export default function CertificatesPage() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<CertificateCategory | "All">("All");
-  const [selectedCert, setSelectedCert] = useState<typeof DUMMY_CERTIFICATES[0] | null>(null);
+
+  const { data: certificates = [], isLoading } = useSWR("certificates", () =>
+    certificatesApi.getAll().then((res) => res.data || [])
+  );
+
+  const [selectedCert, setSelectedCert] = useState<Certificate | null>(null);
 
   const categories: (CertificateCategory | "All")[] = [
     "All",
@@ -28,7 +34,7 @@ export default function CertificatesPage() {
   ];
 
   // Filtering Logic
-  const filteredCertificates = DUMMY_CERTIFICATES.filter((cert) => {
+  const filteredCertificates = certificates.filter((cert) => {
     const matchesSearch =
       cert.title.toLowerCase().includes(search.toLowerCase()) ||
       cert.issuer.toLowerCase().includes(search.toLowerCase()) ||
@@ -88,7 +94,11 @@ export default function CertificatesPage() {
           </div>
 
           {/* Certificates Grid */}
-          {filteredCertificates.length > 0 ? (
+          {isLoading ? (
+            <div className="flex justify-center py-20">
+              <Loader2 className="animate-spin text-accent" size={32} />
+            </div>
+          ) : filteredCertificates.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredCertificates.map((cert) => (
                 <Card key={cert.id} className="flex flex-col p-0 overflow-hidden" hoverEffect={true}>

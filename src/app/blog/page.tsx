@@ -5,23 +5,28 @@ import { Navbar } from "@/components/public/Navbar";
 import { Footer } from "@/components/public/Footer";
 import { Container } from "@/components/public/Container";
 import { BlogCard } from "@/components/public/blog/BlogCard";
-import { DUMMY_BLOGS } from "@/data/dummy";
-import { Search, Tag } from "lucide-react";
+import { Search, Tag, Loader2 } from "lucide-react";
+import useSWR from "swr";
+import { blogsApi } from "@/lib/api";
 
 export default function BlogPage() {
   const [search, setSearch] = useState("");
   const [activeTag, setActiveTag] = useState<string | "All">("All");
 
+  const { data: blogs = [], isLoading } = useSWR("blogs", () =>
+    blogsApi.getAll().then((res) => res.data || [])
+  );
+
   // Extract all unique tags
-  const allTags = ["All", ...Array.from(new Set(DUMMY_BLOGS.flatMap((blog) => blog.tags)))];
+  const allTags = ["All", ...Array.from(new Set((blogs || []).flatMap((blog) => blog.tags || [])))];
 
   // Filtering Logic
-  const filteredBlogs = DUMMY_BLOGS.filter((blog) => {
+  const filteredBlogs = blogs.filter((blog) => {
     const matchesSearch =
       blog.title.toLowerCase().includes(search.toLowerCase()) ||
       blog.excerpt.toLowerCase().includes(search.toLowerCase());
 
-    const matchesTag = activeTag === "All" || blog.tags.includes(activeTag);
+    const matchesTag = activeTag === "All" || (blog.tags && blog.tags.includes(activeTag));
 
     return matchesSearch && matchesTag;
   });
@@ -75,7 +80,11 @@ export default function BlogPage() {
           </div>
 
           {/* Blog Cards Grid */}
-          {filteredBlogs.length > 0 ? (
+          {isLoading ? (
+            <div className="flex justify-center py-20">
+              <Loader2 className="animate-spin text-accent" size={32} />
+            </div>
+          ) : filteredBlogs.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredBlogs.map((blog) => (
                 <BlogCard key={blog.id} blog={blog} />

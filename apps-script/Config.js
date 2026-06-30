@@ -22,7 +22,14 @@ var MEDIA_FOLDER_ID = scriptProperties.getProperty('MEDIA_FOLDER_ID') || ''; // 
  */
 function getDatabase() {
   if (SPREADSHEET_ID) {
-    return SpreadsheetApp.openById(SPREADSHEET_ID);
+    var id = SPREADSHEET_ID.trim();
+    if (id.indexOf('docs.google.com/spreadsheets') !== -1) {
+      var matches = id.match(/\/d\/([a-zA-Z0-9-_]+)/);
+      if (matches && matches[1]) {
+        id = matches[1];
+      }
+    }
+    return SpreadsheetApp.openById(id);
   }
   return SpreadsheetApp.getActiveSpreadsheet();
 }

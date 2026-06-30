@@ -15,14 +15,6 @@ import type {
   SiteSetting,
   ApiResponse
 } from "@/types";
-import {
-  DUMMY_PROJECTS,
-  DUMMY_BLOGS,
-  DUMMY_SKILLS,
-  DUMMY_EXPERIENCE,
-  DUMMY_CERTIFICATES,
-  DUMMY_TESTIMONIALS
-} from "@/data/dummy";
 
 const BASE_URL = process.env.NEXT_PUBLIC_GAS_BASE_URL ?? "";
 const IS_REAL_API = BASE_URL && !BASE_URL.includes("YOUR_SCRIPT_ID");
@@ -102,19 +94,9 @@ export const authApi = {
 export const settingsApi = {
   getAll: async (): Promise<ApiResponse<SiteSetting[]>> => {
     if (IS_REAL_API) {
-      try {
-        return await apiFetch<SiteSetting[]>("get_settings");
-      } catch {
-        return simulateNetwork([
-          { key: "site_name", value: "Muhammad Bayu Nugroho", type: "text" },
-          { key: "bio_title", value: "Lead Frontend Developer", type: "text" }
-        ]);
-      }
+      return apiFetch<SiteSetting[]>("get_settings");
     }
-    return simulateNetwork([
-      { key: "site_name", value: "Muhammad Bayu Nugroho", type: "text" },
-      { key: "bio_title", value: "Lead Frontend Developer", type: "text" }
-    ]);
+    return simulateNetwork([]);
   },
   upsert: async (data: { key: string; value: string; description?: string; type: string }, token: string) => {
     if (IS_REAL_API) {
@@ -127,13 +109,9 @@ export const settingsApi = {
 export const skillsApi = {
   getAll: async (): Promise<ApiResponse<Skill[]>> => {
     if (IS_REAL_API) {
-      try {
-        return await apiFetch<Skill[]>("get_skills");
-      } catch {
-        return simulateNetwork(DUMMY_SKILLS);
-      }
+      return apiFetch<Skill[]>("get_skills");
     }
-    return simulateNetwork(DUMMY_SKILLS);
+    return simulateNetwork([]);
   },
   create: async (data: unknown, token: string) => {
     if (IS_REAL_API) {
@@ -158,29 +136,17 @@ export const skillsApi = {
 export const projectsApi = {
   getAll: async (params?: { category?: string }): Promise<ApiResponse<Project[]>> => {
     if (IS_REAL_API) {
-      try {
-        const query = params?.category ? `&category=${params.category}` : "";
-        return await apiFetch<Project[]>(`get_projects${query}`);
-      } catch {
-        return simulateNetwork(DUMMY_PROJECTS);
-      }
+      const query = params?.category ? `&category=${params.category}` : "";
+      return apiFetch<Project[]>(`get_projects${query}`);
     }
-    return simulateNetwork(DUMMY_PROJECTS);
+    return simulateNetwork([]);
   },
 
   getBySlug: async (slug: string): Promise<ApiResponse<Project>> => {
     if (IS_REAL_API) {
-      try {
-        return await apiFetch<Project>(`get_project_by_slug&slug=${slug}`);
-      } catch {
-        const found = DUMMY_PROJECTS.find((p) => p.slug === slug);
-        if (!found) throw new Error("Project not found");
-        return simulateNetwork(found);
-      }
+      return apiFetch<Project>(`get_project_by_slug&slug=${slug}`);
     }
-    const found = DUMMY_PROJECTS.find((p) => p.slug === slug);
-    if (!found) throw new Error("Project not found");
-    return simulateNetwork(found);
+    throw new Error("Project not found (API disabled)");
   },
 
   create: async (data: unknown, token: string) => {
@@ -208,13 +174,9 @@ export const projectsApi = {
 export const experiencesApi = {
   getAll: async (): Promise<ApiResponse<Experience[]>> => {
     if (IS_REAL_API) {
-      try {
-        return await apiFetch<Experience[]>("get_experiences");
-      } catch {
-        return simulateNetwork(DUMMY_EXPERIENCE);
-      }
+      return apiFetch<Experience[]>("get_experiences");
     }
-    return simulateNetwork(DUMMY_EXPERIENCE);
+    return simulateNetwork([]);
   },
   create: async (data: unknown, token: string) => {
     if (IS_REAL_API) {
@@ -239,13 +201,9 @@ export const experiencesApi = {
 export const certificatesApi = {
   getAll: async (): Promise<ApiResponse<Certificate[]>> => {
     if (IS_REAL_API) {
-      try {
-        return await apiFetch<Certificate[]>("get_certificates");
-      } catch {
-        return simulateNetwork(DUMMY_CERTIFICATES);
-      }
+      return apiFetch<Certificate[]>("get_certificates");
     }
-    return simulateNetwork(DUMMY_CERTIFICATES);
+    return simulateNetwork([]);
   },
   create: async (data: unknown, token: string) => {
     if (IS_REAL_API) {
@@ -270,13 +228,9 @@ export const certificatesApi = {
 export const testimonialsApi = {
   getAll: async (): Promise<ApiResponse<Testimonial[]>> => {
     if (IS_REAL_API) {
-      try {
-        return await apiFetch<Testimonial[]>("get_testimonials");
-      } catch {
-        return simulateNetwork(DUMMY_TESTIMONIALS);
-      }
+      return apiFetch<Testimonial[]>("get_testimonials");
     }
-    return simulateNetwork(DUMMY_TESTIMONIALS);
+    return simulateNetwork([]);
   },
   create: async (data: unknown, token: string) => {
     if (IS_REAL_API) {
@@ -301,28 +255,16 @@ export const testimonialsApi = {
 export const blogsApi = {
   getAll: async (): Promise<ApiResponse<Blog[]>> => {
     if (IS_REAL_API) {
-      try {
-        return await apiFetch<Blog[]>("get_blogs");
-      } catch {
-        return simulateNetwork(DUMMY_BLOGS);
-      }
+      return apiFetch<Blog[]>("get_blogs");
     }
-    return simulateNetwork(DUMMY_BLOGS);
+    return simulateNetwork([]);
   },
 
   getBySlug: async (slug: string): Promise<ApiResponse<Blog>> => {
     if (IS_REAL_API) {
-      try {
-        return await apiFetch<Blog>(`get_blog_by_slug&slug=${slug}`);
-      } catch {
-        const found = DUMMY_BLOGS.find((b) => b.slug === slug);
-        if (!found) throw new Error("Blog not found");
-        return simulateNetwork(found);
-      }
+      return apiFetch<Blog>(`get_blog_by_slug&slug=${slug}`);
     }
-    const found = DUMMY_BLOGS.find((b) => b.slug === slug);
-    if (!found) throw new Error("Blog not found");
-    return simulateNetwork(found);
+    throw new Error("Blog not found (API disabled)");
   },
 
   create: async (data: unknown, token: string) => {

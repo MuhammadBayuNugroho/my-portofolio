@@ -6,17 +6,22 @@ import { Footer } from "@/components/public/Footer";
 import { Container } from "@/components/public/Container";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { DUMMY_EXPERIENCE, DUMMY_JOURNEY } from "@/data/dummy";
 import type { ExperienceType } from "@/types";
 import { getDuration } from "@/lib/utils";
-import { Briefcase, Calendar, MapPin, CheckCircle2, Award, GraduationCap, Landmark, Heart, Compass } from "lucide-react";
+import { Briefcase, Calendar, MapPin, CheckCircle2, Award, GraduationCap, Landmark, Heart, Compass, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import useSWR from "swr";
+import { experiencesApi } from "@/lib/api";
 
 type PageTab = "experience" | "journey";
 type JourneyFilter = "All" | "Achievement" | "Leadership" | "Career" | "Education" | "Volunteer";
 
 export default function ExperiencePage() {
   const [activeTab, setActiveTab] = useState<PageTab>("experience");
+  
+  const { data: experiences = [], isLoading } = useSWR("experiences", () =>
+    experiencesApi.getAll().then((res) => res.data || [])
+  );
   
   // Tab 1 state: Experience
   const [activeType, setActiveType] = useState<ExperienceType | "All">("All");
@@ -39,12 +44,21 @@ export default function ExperiencePage() {
     "Volunteer",
   ];
 
-  // Filtering Logic
-  const filteredExperience = DUMMY_EXPERIENCE.filter((exp) => {
+  // Filtering Logic: Professional/Freelance/Organizational/Volunteer
+  const filteredExperience = experiences.filter((exp) => {
+    // Only display career-oriented experiences in Tab 1
+    const isCareerType = ["Professional", "Freelance", "Organizational"].includes(exp.type);
+    if (!isCareerType) return false;
+    
     return activeType === "All" || exp.type === activeType;
   });
 
-  const filteredJourney = DUMMY_JOURNEY.filter((item) => {
+  // Filtering Logic: Milestones (Education/Achievement/Leadership/Volunteer)
+  const filteredJourney = experiences.filter((item) => {
+    // Only display milestones in Tab 2
+    const isJourneyType = ["Education", "Achievement", "Leadership", "Volunteer"].includes(item.type);
+    if (!isJourneyType) return false;
+    
     return activeJourneyFilter === "All" || item.type === activeJourneyFilter;
   });
 
@@ -145,7 +159,11 @@ export default function ExperiencePage() {
               </div>
 
               {/* Vertical Timeline Layout */}
-              {filteredExperience.length > 0 ? (
+              {isLoading ? (
+                <div className="flex justify-center py-20">
+                  <Loader2 className="animate-spin text-accent" size={32} />
+                </div>
+              ) : filteredExperience.length > 0 ? (
                 <div className="relative max-w-3xl mx-auto pl-6 border-l-2 border-border/80 flex flex-col gap-10">
                   {filteredExperience.map((exp, idx) => {
                     const duration = getDuration(exp.startDate, exp.endDate);
@@ -252,7 +270,11 @@ export default function ExperiencePage() {
               </div>
 
               {/* Journey Timeline */}
-              {filteredJourney.length > 0 ? (
+              {isLoading ? (
+                <div className="flex justify-center py-20">
+                  <Loader2 className="animate-spin text-accent" size={32} />
+                </div>
+              ) : filteredJourney.length > 0 ? (
                 <div className="relative max-w-3xl mx-auto pl-6 border-l-2 border-border/80 flex flex-col gap-10">
                   {filteredJourney.map((item, idx) => {
                     const IconComponent = getJourneyIcon(item.type);
@@ -273,28 +295,28 @@ export default function ExperiencePage() {
                         </span>
 
                         {/* Card Container */}
-                        <Card className={`p-6 ${item.highlight ? "border-accent/40 shadow-glow-accent" : ""}`} hoverEffect={true}>
+                        <Card className={`p-6 ${item.isCurrent ? "border-accent/40 shadow-glow-accent" : ""}`} hoverEffect={true}>
                           <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-3">
                             <div>
                               <div className="flex items-center gap-2 mb-1">
                                 <span className="text-[10px] text-foreground-subtle uppercase font-bold tracking-wider">
                                   {item.type}
                                 </span>
-                                {item.highlight && (
-                                  <Badge variant="primary" className="text-[8px] px-1.5 py-0">Highlight</Badge>
+                                {item.isCurrent && (
+                                  <Badge variant="primary" className="text-[8px] px-1.5 py-0">Aktif</Badge>
                                 )}
                               </div>
                               <h3 className="font-display text-h3 text-foreground font-semibold">
                                 {item.title}
                               </h3>
                               <p className="text-caption text-foreground-muted font-medium">
-                                {item.organization} {item.role ? `• ${item.role}` : ""}
+                                {item.organization}
                               </p>
                             </div>
 
                             <span className="inline-flex self-start md:self-center items-center gap-1 text-[10px] font-bold text-foreground-subtle bg-background-overlay border border-border px-2 py-0.5 rounded">
                               <Calendar size={10} />
-                              {item.year}
+                              {item.startDate ? new Date(item.startDate).getFullYear() : "Sekarang"}
                             </span>
                           </div>
 

@@ -7,15 +7,20 @@ import { Footer } from "@/components/public/Footer";
 import { Container } from "@/components/public/Container";
 import { Badge } from "@/components/ui/Badge";
 import { ProjectCard } from "@/components/public/projects/ProjectCard";
-import { DUMMY_PROJECTS, DUMMY_GALLERY } from "@/data/dummy";
-import type { ProjectCategory, GalleryCategory } from "@/types";
-import { Search, ZoomIn, X, Calendar, Tag } from "lucide-react";
+import type { Project, ProjectCategory } from "@/types";
+import { Search, ZoomIn, X, Calendar, Tag, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import useSWR from "swr";
+import { projectsApi } from "@/lib/api";
 
 type PageTab = "projects" | "gallery";
 
 export default function ProjectsPage() {
   const [activeTab, setActiveTab] = useState<PageTab>("projects");
+
+  const { data: projects = [], isLoading } = useSWR("projects", () =>
+    projectsApi.getAll().then((res) => res.data || [])
+  );
 
   // Tab 1 state: Projects
   const [projectSearch, setProjectSearch] = useState("");
@@ -31,10 +36,10 @@ export default function ProjectsPage() {
   ];
 
   // Tab 2 state: Gallery
-  const [activeGalleryCategory, setActiveGalleryCategory] = useState<GalleryCategory | "All">("All");
-  const [selectedGalleryItem, setSelectedGalleryItem] = useState<typeof DUMMY_GALLERY[0] | null>(null);
+  const [activeGalleryCategory, setActiveGalleryCategory] = useState<string | "All">("All");
+  const [selectedGalleryItem, setSelectedGalleryItem] = useState<Project | null>(null);
 
-  const galleryCategories: (GalleryCategory | "All")[] = [
+  const galleryCategories: (string | "All")[] = [
     "All",
     "Web Design",
     "Graphic Design",
@@ -43,12 +48,14 @@ export default function ProjectsPage() {
     "UI/UX",
   ];
 
-  // Filtering Logic: Projects
-  const filteredProjects = DUMMY_PROJECTS.filter((project) => {
+  // Filtering Logic: Projects (which are case studies)
+  const filteredProjects = projects.filter((project) => {
+    if (project.isGalleryOnly) return false; // Filter out gallery assets from studies list
+    
     const matchesSearch =
       project.title.toLowerCase().includes(projectSearch.toLowerCase()) ||
       project.description.toLowerCase().includes(projectSearch.toLowerCase()) ||
-      project.techStack.some((tech) => tech.toLowerCase().includes(projectSearch.toLowerCase()));
+      (project.techStack && project.techStack.some((tech) => tech.toLowerCase().includes(projectSearch.toLowerCase())));
 
     const matchesCategory =
       activeProjectCategory === "All" || project.category === activeProjectCategory;
@@ -56,9 +63,11 @@ export default function ProjectsPage() {
     return matchesSearch && matchesCategory;
   });
 
-  // Filtering Logic: Gallery
-  const filteredGallery = DUMMY_GALLERY.filter((item) => {
-    return activeGalleryCategory === "All" || item.category === activeGalleryCategory;
+  // Filtering Logic: Gallery (which are visual assets)
+  const filteredGallery = projects.filter((project) => {
+    if (!project.isGalleryOnly) return false; // Only visual assets
+    
+    return activeGalleryCategory === "All" || project.category === activeGalleryCategory;
   });
 
   return (
@@ -138,7 +147,11 @@ export default function ProjectsPage() {
               </div>
 
               {/* Projects Grid */}
-              {filteredProjects.length > 0 ? (
+              {isLoading ? (
+                <div className="flex justify-center py-20">
+                  <Loader2 className="animate-spin text-accent" size={32} />
+                </div>
+              ) : filteredProjects.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                   {filteredProjects.map((project) => (
                     <ProjectCard key={project.id} project={project} />
@@ -173,7 +186,11 @@ export default function ProjectsPage() {
               </div>
 
               {/* Masonry Columns */}
-              {filteredGallery.length > 0 ? (
+              {isLoading ? (
+                <div className="flex justify-center py-20">
+                  <Loader2 className="animate-spin text-accent" size={32} />
+                </div>
+              ) : filteredGallery.length > 0 ? (
                 <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-6 space-y-6">
                   {filteredGallery.map((item) => (
                     <div
@@ -182,14 +199,16 @@ export default function ProjectsPage() {
                       className="break-inside-avoid relative rounded-xl overflow-hidden border border-border/60 bg-background-elevated group cursor-pointer shadow-soft hover:shadow-hover hover:border-border-strong transition-all duration-300"
                     >
                       <div className="relative w-full h-auto min-h-[150px] aspect-square overflow-hidden bg-background-overlay">
-                        <Image
-                          src={item.imageUrl}
-                          alt={item.title}
-                          width={400}
-                          height={400}
-                          loading="lazy"
-                          className="object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
+                        {item.coverImage && (
+                          <Image
+                            src={item.coverImage}
+                            alt={item.title}
+                            width={400}
+                            height={400}
+                            loading="lazy"
+                            className="object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        )}
                         {/* Hover Overlay */}
                         <div className="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
                           <div className="h-10 w-10 rounded-full bg-accent/20 border border-accent/40 flex items-center justify-center text-accent">
@@ -241,13 +260,15 @@ export default function ProjectsPage() {
             >
               {/* Left: Image */}
               <div className="relative flex-1 bg-background-overlay flex items-center justify-center min-h-[300px] md:min-h-0 aspect-video md:aspect-auto">
-                <Image
-                  src={selectedGalleryItem.imageUrl}
-                  alt={selectedGalleryItem.title}
-                  width={800}
-                  height={600}
-                  className="object-contain max-h-[70vh] w-full"
-                />
+                {selectedGalleryItem.coverImage && (
+                  <Image
+                    src={selectedGalleryItem.coverImage}
+                    alt={selectedGalleryItem.title}
+                    width={800}
+                    height={600}
+                    className="object-contain max-h-[70vh] w-full"
+                  />
+                )}
               </div>
 
               {/* Right: Info Sidebar */}
@@ -279,16 +300,18 @@ export default function ProjectsPage() {
                       <span>Dibuat: Juni 2026</span>
                     </div>
 
-                    <div className="flex items-start gap-2 text-foreground-muted">
-                      <Tag size={14} className="mt-0.5" />
-                      <div className="flex flex-wrap gap-1">
-                        {selectedGalleryItem.tags.map((tag) => (
-                          <span key={tag} className="text-foreground-subtle text-[10px] bg-background-overlay border border-border px-1.5 py-0.5 rounded">
-                            #{tag}
-                          </span>
-                        ))}
+                    {selectedGalleryItem.techStack && selectedGalleryItem.techStack.length > 0 && (
+                      <div className="flex items-start gap-2 text-foreground-muted">
+                        <Tag size={14} className="mt-0.5" />
+                        <div className="flex flex-wrap gap-1">
+                          {selectedGalleryItem.techStack.map((tech) => (
+                            <span key={tech} className="text-foreground-subtle text-[10px] bg-background-overlay border border-border px-1.5 py-0.5 rounded">
+                              #{tech}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
 

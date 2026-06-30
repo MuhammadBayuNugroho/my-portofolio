@@ -6,13 +6,18 @@ import { Navbar } from "@/components/public/Navbar";
 import { Footer } from "@/components/public/Footer";
 import { Container } from "@/components/public/Container";
 import { Card } from "@/components/ui/Card";
-import { DUMMY_TESTIMONIALS } from "@/data/dummy";
 import type { TestimonialRelation } from "@/types";
-import { Star, Quote, MessageSquare } from "lucide-react";
+import { Star, Quote, MessageSquare, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import useSWR from "swr";
+import { testimonialsApi } from "@/lib/api";
 
 export default function TestimonialsPage() {
   const [activeRelation, setActiveRelation] = useState<TestimonialRelation | "All">("All");
+
+  const { data: testimonials = [], isLoading } = useSWR("testimonials", () =>
+    testimonialsApi.getAll().then((res) => res.data || [])
+  );
 
   const relations: (TestimonialRelation | "All")[] = [
     "All",
@@ -23,7 +28,7 @@ export default function TestimonialsPage() {
   ];
 
   // Filtering Logic
-  const filteredTestimonials = DUMMY_TESTIMONIALS.filter((t) => {
+  const filteredTestimonials = testimonials.filter((t) => {
     return activeRelation === "All" || t.relation === activeRelation;
   });
 
@@ -60,7 +65,11 @@ export default function TestimonialsPage() {
           </div>
 
           {/* Testimonials Grid */}
-          {filteredTestimonials.length > 0 ? (
+          {isLoading ? (
+            <div className="flex justify-center py-20">
+              <Loader2 className="animate-spin text-accent" size={32} />
+            </div>
+          ) : filteredTestimonials.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredTestimonials.map((t, idx) => (
                 <motion.div

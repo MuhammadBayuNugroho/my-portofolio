@@ -6,33 +6,56 @@ import { Container } from "@/components/public/Container";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ProjectCard } from "@/components/public/projects/ProjectCard";
-import { DUMMY_PROJECTS } from "@/data/dummy";
 import { ArrowLeft, ExternalLink, Github } from "lucide-react";
 import { notFound } from "next/navigation";
+import { projectsApi } from "@/lib/api";
 
 interface ProjectDetailPageProps {
   params: Promise<{ slug: string }>;
 }
 
 export async function generateStaticParams() {
-  return DUMMY_PROJECTS.map((project) => ({
-    slug: project.slug,
-  }));
+  try {
+    const res = await projectsApi.getAll();
+    const items = res.data || [];
+    if (items.length === 0) {
+      return [{ slug: "placeholder-project" }];
+    }
+    return items.map((project) => ({
+      slug: project.slug,
+    }));
+  } catch {
+    return [{ slug: "placeholder-project" }];
+  }
 }
 
 export default async function ProjectDetailPage({ params }: ProjectDetailPageProps) {
   const { slug } = await params;
 
-  const project = DUMMY_PROJECTS.find((p) => p.slug === slug);
+  let project = null;
+  let relatedProjects: any[] = [];
+
+  try {
+    const res = await projectsApi.getBySlug(slug);
+    if (res.success && res.data) {
+      project = res.data;
+    }
+  } catch {
+    notFound();
+  }
 
   if (!project) {
     notFound();
   }
 
-  // Related Projects logic (same category, excluding current project)
-  const relatedProjects = DUMMY_PROJECTS.filter(
-    (p) => p.category === project.category && p.id !== project.id
-  ).slice(0, 3);
+  try {
+    const allProjRes = await projectsApi.getAll();
+    if (allProjRes.success && allProjRes.data) {
+      relatedProjects = allProjRes.data.filter(
+        (p) => p.category === project.category && p.id !== project.id
+      ).slice(0, 3);
+    }
+  } catch {}
 
   return (
     <>
@@ -103,26 +126,8 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
 
           {/* Content Markdown Case Study */}
           <div className="max-w-3xl mx-auto border-b border-border pb-16 mb-16">
-            <article className="prose dark:prose-invert">
-              <h1>Studi Kasus Proyek</h1>
-              <p>
-                Bagian ini berisi visualisasi dan penyusunan sistematis terkait proses penemuan solusi digital di dalam proyek <strong>{project.title}</strong>.
-              </p>
-              <h2>1. Latar Belakang Masalah</h2>
-              <p>
-                Setiap solusi yang efisien berakar dari pendefinisian problem yang presisi. Dalam pengerjaan portfolio ini, fokus utamanya adalah menjaga rasio performa dan konsistensi visual layout.
-              </p>
-              <h2>2. Metodologi Pendekatan</h2>
-              <p>
-                Mengadopsi prinsip desain modular Apple Style yang dipadukan dengan struktur Next.js App Router. Penggunaan design tokens menjamin konsistensi palet warna pada dark maupun light mode.
-              </p>
-              <blockquote>
-                Prinsip utama desain adalah kesederhanaan visual yang menyembunyikan kompleksitas fungsionalitas di baliknya.
-              </blockquote>
-              <h2>3. Kesimpulan</h2>
-              <p>
-                Lighthouse score dapat dipertahankan di atas rata-rata industri dengan load time di bawah 1 detik, memastikan tingkat konversi dan aksesibilitas maksimal.
-              </p>
+            <article className="prose dark:prose-invert max-w-none whitespace-pre-line">
+              {project.contentMarkdown}
             </article>
           </div>
 

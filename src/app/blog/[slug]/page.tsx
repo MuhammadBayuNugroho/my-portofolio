@@ -4,25 +4,42 @@ import { Navbar } from "@/components/public/Navbar";
 import { Footer } from "@/components/public/Footer";
 import { Container } from "@/components/public/Container";
 import { Badge } from "@/components/ui/Badge";
-import { DUMMY_BLOGS } from "@/data/dummy";
 import { ArrowLeft, Calendar, Clock, List } from "lucide-react";
 import { notFound } from "next/navigation";
 import { formatDate } from "@/lib/utils";
+import { blogsApi } from "@/lib/api";
 
 interface BlogDetailPageProps {
   params: Promise<{ slug: string }>;
 }
 
 export async function generateStaticParams() {
-  return DUMMY_BLOGS.map((blog) => ({
-    slug: blog.slug,
-  }));
+  try {
+    const res = await blogsApi.getAll();
+    const items = res.data || [];
+    if (items.length === 0) {
+      return [{ slug: "placeholder-blog" }];
+    }
+    return items.map((blog) => ({
+      slug: blog.slug,
+    }));
+  } catch {
+    return [{ slug: "placeholder-blog" }];
+  }
 }
 
 export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
   const { slug } = await params;
 
-  const blog = DUMMY_BLOGS.find((b) => b.slug === slug);
+  let blog = null;
+  try {
+    const res = await blogsApi.getBySlug(slug);
+    if (res.success && res.data) {
+      blog = res.data;
+    }
+  } catch {
+    notFound();
+  }
 
   if (!blog) {
     notFound();
@@ -79,37 +96,8 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
               </div>
 
               {/* Markdown Content Parser */}
-              <article className="prose dark:prose-invert max-w-none">
-                <h2>1. Pengantar Utama</h2>
-                <p>
-                  Situs web berkecepatan tinggi tidak hanya menyenangkan pengguna tetapi juga berkontribusi besar bagi peringkat SEO. Di Next.js, ini dicapai melalui optimasi resource secara pasif dan kompilasi statis.
-                </p>
-                <p>
-                  Dalam seri tutorial ini, kita merinci bagaimana membagi modul antarmuka web, menerapkan caching state, serta menyambungkannya ke Google Sheets API secara aman.
-                </p>
-
-                <h2>2. Penerapan TypeScript Tipe Ketat (Strict)</h2>
-                <p>
-                  Mendeklarasikan interface untuk setiap entitas data (seperti Project, Blog, dan Journey) menghindari kesalahan parse runtime secara dini saat kita memproses respon baris dari spreadsheet.
-                </p>
-                <pre>
-                  <code>
-{`export interface Blog {
-  id: string;
-  title: string;
-  slug: string;
-  excerpt: string;
-  contentMarkdown: string;
-  coverImage: string;
-  tags: string[];
-}`}
-                  </code>
-                </pre>
-
-                <h2>3. Kesimpulan Akhir</h2>
-                <p>
-                  Dengan pemisahan logika fetching (Repository Pattern) dan dynamic routing Next.js, transisi visual terasa organik tanpa memakan resource jaringan yang berlebihan.
-                </p>
+              <article className="prose dark:prose-invert max-w-none whitespace-pre-line">
+                {blog.contentMarkdown}
               </article>
             </div>
 
