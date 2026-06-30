@@ -18,6 +18,17 @@ function doGet(e) {
     }
     
     switch (action) {
+      case "get_all_data":
+        responseData = {
+          settings: handleGetSettings(),
+          skills: handleGetSkills(),
+          projects: handleGetProjects(),
+          experiences: handleGetExperiences(),
+          certificates: handleGetCertificates(),
+          blogs: handleGetBlogs(),
+          testimonials: handleGetTestimonials()
+        };
+        break;
       case "get_settings":
         responseData = handleGetSettings();
         break;
