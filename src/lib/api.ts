@@ -557,6 +557,8 @@ export const mediaApi = {
       mimeType: string;
       base64Content: string;
       subfolder?: string;
+    },
+    token: string
   ): Promise<ApiResponse<{ url: string; fileId: string; downloadUrl?: string }>> => {
     if (IS_REAL_API) {
       return apiFetch<{ url: string; fileId: string; downloadUrl?: string }>("upload_file", {
