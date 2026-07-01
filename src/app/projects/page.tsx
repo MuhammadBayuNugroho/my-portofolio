@@ -13,61 +13,33 @@ import { motion, AnimatePresence } from "framer-motion";
 import useSWR from "swr";
 import { projectsApi } from "@/lib/api";
 
-type PageTab = "projects" | "gallery";
-
+import React from "react";
 export default function ProjectsPage() {
-  const [activeTab, setActiveTab] = useState<PageTab>("projects");
-
   const { data: projects = [], isLoading } = useSWR("projects", () =>
     projectsApi.getAll().then((res) => res.data || [])
   );
 
-  // Tab 1 state: Projects
+  // Search and Filters
   const [projectSearch, setProjectSearch] = useState("");
-  const [activeProjectCategory, setActiveProjectCategory] = useState<ProjectCategory | "All">("All");
+  const [activeCategory, setActiveCategory] = useState<ProjectCategory | "All">("All");
 
-  const projectCategories: (ProjectCategory | "All")[] = [
-    "All",
-    "Web",
-    "UI/UX",
-    "Graphic Design",
-    "Mobile App",
-    "Open Source",
-  ];
+  const existingCategories = React.useMemo(() => {
+    const cats = [...new Set(projects.map((p) => p.category))];
+    return ["All", ...cats];
+  }, [projects]);
 
-  // Tab 2 state: Gallery
-  const [activeGalleryCategory, setActiveGalleryCategory] = useState<string | "All">("All");
   const [selectedGalleryItem, setSelectedGalleryItem] = useState<Project | null>(null);
 
-  const galleryCategories: (string | "All")[] = [
-    "All",
-    "Web Design",
-    "Graphic Design",
-    "Branding",
-    "Illustration",
-    "UI/UX",
-  ];
-
-  // Filtering Logic: Projects (which are case studies)
+  // Filtering Logic: Unified Projects
   const filteredProjects = projects.filter((project) => {
-    if (project.isGalleryOnly) return false; // Filter out gallery assets from studies list
-    
     const matchesSearch =
       project.title.toLowerCase().includes(projectSearch.toLowerCase()) ||
       project.description.toLowerCase().includes(projectSearch.toLowerCase()) ||
       (project.techStack && project.techStack.some((tech) => tech.toLowerCase().includes(projectSearch.toLowerCase())));
 
-    const matchesCategory =
-      activeProjectCategory === "All" || project.category === activeProjectCategory;
+    const matchesCategory = activeCategory === "All" || project.category === activeCategory;
 
     return matchesSearch && matchesCategory;
-  });
-
-  // Filtering Logic: Gallery (which are visual assets)
-  const filteredGallery = projects.filter((project) => {
-    if (!project.isGalleryOnly) return false; // Only visual assets
-    
-    return activeGalleryCategory === "All" || project.category === activeGalleryCategory;
   });
 
   return (
@@ -85,158 +57,86 @@ export default function ProjectsPage() {
             </p>
           </div>
 
-          {/* Tab Switcher */}
-          <div className="flex justify-center mb-10">
-            <div className="inline-flex rounded-lg bg-background-elevated p-1 border border-border">
-              <button
-                onClick={() => setActiveTab("projects")}
-                className={`px-6 py-2.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-                  activeTab === "projects"
-                    ? "bg-accent text-accent-foreground shadow-sm"
-                    : "text-foreground-muted hover:text-foreground"
-                }`}
-              >
-                Studi Kasus Proyek
-              </button>
-              <button
-                onClick={() => setActiveTab("gallery")}
-                className={`px-6 py-2.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-                  activeTab === "gallery"
-                    ? "bg-accent text-accent-foreground shadow-sm"
-                    : "text-foreground-muted hover:text-foreground"
-                }`}
-              >
-                Galeri Aset Visual
-              </button>
+          {/* Search and Filters */}
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-between border-b border-border pb-6 mb-10">
+            {/* Category tabs */}
+            <div className="flex flex-wrap justify-center md:justify-start gap-2 order-2 md:order-1">
+              {existingCategories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategory(cat as string)}
+                  className={`px-4 py-2 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
+                    activeCategory === cat
+                      ? "bg-accent text-accent-foreground"
+                      : "text-foreground-muted hover:bg-background-elevated hover:text-foreground"
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
+            {/* Search input */}
+            <div className="relative w-full md:max-w-xs order-1 md:order-2">
+              <input
+                type="text"
+                value={projectSearch}
+                onChange={(e) => setProjectSearch(e.target.value)}
+                placeholder="Cari proyek atau stack..."
+                className="w-full rounded-md border border-border bg-background-elevated pl-10 pr-4 py-2 text-xs text-foreground focus-visible:outline-2 focus-visible:outline-accent"
+              />
+              <Search className="absolute left-3 top-2.5 text-foreground-subtle h-4 w-4" />
             </div>
           </div>
 
-          {/* TAB 1: PROJECTS */}
-          {activeTab === "projects" && (
-            <>
-              {/* Search and Filters */}
-              <div className="flex flex-col md:flex-row gap-4 items-center justify-between border-b border-border pb-6 mb-10">
-                {/* Category tabs */}
-                <div className="flex flex-wrap gap-2 order-2 md:order-1">
-                  {projectCategories.map((cat) => (
-                    <button
-                      key={cat}
-                      onClick={() => setActiveProjectCategory(cat)}
-                      className={`px-4 py-2 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
-                        activeProjectCategory === cat
-                          ? "bg-accent text-accent-foreground"
-                          : "text-foreground-muted hover:bg-background-elevated hover:text-foreground"
-                      }`}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Search input */}
-                <div className="relative w-full md:max-w-xs order-1 md:order-2">
-                  <input
-                    type="text"
-                    value={projectSearch}
-                    onChange={(e) => setProjectSearch(e.target.value)}
-                    placeholder="Cari proyek atau stack..."
-                    className="w-full rounded-md border border-border bg-background-elevated pl-10 pr-4 py-2 text-xs text-foreground focus-visible:outline-2 focus-visible:outline-accent"
-                  />
-                  <Search className="absolute left-3 top-2.5 text-foreground-subtle h-4 w-4" />
-                </div>
-              </div>
-
-              {/* Projects Grid */}
-              {isLoading ? (
-                <div className="flex justify-center py-20">
-                  <Loader2 className="animate-spin text-accent" size={32} />
-                </div>
-              ) : filteredProjects.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {filteredProjects.map((project) => (
-                    <ProjectCard key={project.id} project={project} />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-20">
-                  <p className="text-body-lg text-foreground-muted">Proyek tidak ditemukan.</p>
-                </div>
-              )}
-            </>
-          )}
-
-          {/* TAB 2: GALLERY */}
-          {activeTab === "gallery" && (
-            <>
-              {/* Filter Tabs */}
-              <div className="flex flex-wrap justify-center gap-2 border-b border-border pb-6 mb-10">
-                {galleryCategories.map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => setActiveGalleryCategory(cat)}
-                    className={`px-4 py-2 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
-                      activeGalleryCategory === cat
-                        ? "bg-accent text-accent-foreground"
-                        : "text-foreground-muted hover:bg-background-elevated hover:text-foreground"
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
-
-              {/* Masonry Columns */}
-              {isLoading ? (
-                <div className="flex justify-center py-20">
-                  <Loader2 className="animate-spin text-accent" size={32} />
-                </div>
-              ) : filteredGallery.length > 0 ? (
-                <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-6 space-y-6">
-                  {filteredGallery.map((item) => (
+          {/* Projects Grid */}
+          {isLoading ? (
+            <div className="flex justify-center py-20">
+              <Loader2 className="animate-spin text-accent" size={32} />
+            </div>
+          ) : filteredProjects.length > 0 ? (
+            <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
+              {filteredProjects.map((project) => (
+                <div key={project.id} className="break-inside-avoid">
+                  {project.isGalleryOnly ? (
                     <div
-                      key={item.id}
-                      onClick={() => setSelectedGalleryItem(item)}
-                      className="break-inside-avoid relative rounded-xl overflow-hidden border border-border/60 bg-background-elevated group cursor-pointer shadow-soft hover:shadow-hover hover:border-border-strong transition-all duration-300"
+                      onClick={() => setSelectedGalleryItem(project)}
+                      className="relative rounded-xl overflow-hidden border border-border/60 bg-background-elevated group cursor-pointer shadow-soft hover:shadow-hover hover:border-border-strong transition-all duration-300 h-full flex flex-col"
                     >
-                      <div className="relative w-full h-auto min-h-[150px] aspect-square overflow-hidden bg-background-overlay">
-                        {item.coverImage && (
+                      <div className="relative w-full aspect-square overflow-hidden bg-background-overlay">
+                        {project.coverImage && (
                           <Image
-                            src={item.coverImage}
-                            alt={item.title}
+                            src={project.coverImage}
+                            alt={project.title}
                             width={400}
                             height={400}
                             loading="lazy"
-                            className="object-cover transition-transform duration-500 group-hover:scale-105"
+                            className="object-cover transition-transform duration-500 group-hover:scale-105 h-full w-full"
                           />
                         )}
-                        {/* Hover Overlay */}
                         <div className="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
                           <div className="h-10 w-10 rounded-full bg-accent/20 border border-accent/40 flex items-center justify-center text-accent">
                             <ZoomIn size={18} />
                           </div>
                         </div>
                       </div>
-
                       <div className="p-4">
-                        <h3 className="text-xs font-semibold text-foreground mb-1 line-clamp-1">
-                          {item.title}
-                        </h3>
-                        <div className="flex justify-between items-center mt-2">
-                          <span className="text-[10px] text-foreground-subtle uppercase tracking-wider font-semibold">
-                            {item.category}
-                          </span>
-                        </div>
+                        <h3 className="text-xs font-semibold text-foreground mb-1 line-clamp-1">{project.title}</h3>
+                        <span className="text-[10px] text-foreground-subtle uppercase tracking-wider font-semibold">{project.category}</span>
                       </div>
                     </div>
-                  ))}
+                  ) : (
+                    <ProjectCard project={project} />
+                  )}
                 </div>
-              ) : (
-                <div className="text-center py-20">
-                  <p className="text-body-lg text-foreground-muted">Galeri karya kosong.</p>
-                </div>
-              )}
-            </>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-20">
+              <p className="text-body-lg text-foreground-muted">Proyek tidak ditemukan.</p>
+            </div>
           )}
+
         </Container>
       </main>
 

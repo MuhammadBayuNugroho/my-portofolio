@@ -160,7 +160,7 @@ export default function RootLayout({
               jobTitle: "Frontend Developer & Web Designer",
               description: SITE_DESCRIPTION,
               sameAs: [
-                "https://github.com/muhbayunugroho",
+                "https://github.com/MuhammadBayuNugroho",
                 "https://linkedin.com/in/muhbayunugroho",
               ],
               knowsAbout: [

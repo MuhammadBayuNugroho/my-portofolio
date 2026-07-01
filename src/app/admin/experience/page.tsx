@@ -10,10 +10,12 @@ import { Plus, Edit2, Trash2, Loader2, Briefcase, MapPin, Calendar, Star } from 
 import { cn } from "@/lib/utils";
 
 // ─── Jenis tipe berdasarkan tab ─────────────────────────────────
-const WORK_TYPES: ExperienceType[] = ["Professional", "Freelance", "Organizational"];
-const JOURNEY_TYPES: ExperienceType[] = ["Education", "Career", "Leadership", "Achievement", "Volunteer"];
+const WORK_TYPES: ExperienceType[] = ["Professional", "Freelance", "Career"];
+const ORG_TYPES: ExperienceType[] = ["Organizational", "Volunteer"];
+const ACH_TYPES: ExperienceType[] = ["Achievement", "Leadership"];
+const EDU_TYPES: ExperienceType[] = ["Education", "Pendidikan"];
 
-type TabKey = "work" | "journey";
+type TabKey = "work" | "organization" | "achievement" | "education";
 
 // ─── Flexible Category Tag Input ────────────────────────────────
 function CategoryInput({
@@ -117,14 +119,19 @@ export default function AdminExperiencePage() {
 
   // Data filtered by tab
   const displayed = useMemo(() => {
-    return experiences.filter((e) =>
-      activeTab === "work"
-        ? WORK_TYPES.includes(e.type as ExperienceType)
-        : JOURNEY_TYPES.includes(e.type as ExperienceType)
-    );
+    return experiences.filter((e) => {
+      if (activeTab === "work") return WORK_TYPES.includes(e.type as ExperienceType);
+      if (activeTab === "organization") return ORG_TYPES.includes(e.type as ExperienceType);
+      if (activeTab === "achievement") return ACH_TYPES.includes(e.type as ExperienceType);
+      if (activeTab === "education") return EDU_TYPES.includes(e.type as ExperienceType);
+      return false;
+    });
   }, [experiences, activeTab]);
 
-  const defaultType: ExperienceType = activeTab === "work" ? "Professional" : "Education";
+  const defaultType: ExperienceType = 
+    activeTab === "work" ? "Professional" :
+    activeTab === "organization" ? "Organizational" :
+    activeTab === "achievement" ? "Achievement" : "Education";
 
   const handleOpenCreate = () => {
     setEditingExp(null);
@@ -184,11 +191,16 @@ export default function AdminExperiencePage() {
   };
 
   const tabs = [
-    { key: "work" as TabKey, label: "💼 Pekerjaan", desc: "Professional, Freelance, Organizational" },
-    { key: "journey" as TabKey, label: "🎯 Perjalanan", desc: "Education, Leadership, Achievement, Volunteer" },
+    { key: "work" as TabKey, label: "💼 Pekerjaan", desc: "Professional, Freelance" },
+    { key: "organization" as TabKey, label: "👥 Organisasi", desc: "Organizational, Volunteer" },
+    { key: "achievement" as TabKey, label: "🏆 Prestasi", desc: "Achievement, Leadership" },
+    { key: "education" as TabKey, label: "🎓 Pendidikan", desc: "Education, Kursus" },
   ];
 
-  const typeOptions: ExperienceType[] = activeTab === "work" ? WORK_TYPES : JOURNEY_TYPES;
+  const typeOptions: ExperienceType[] = 
+    activeTab === "work" ? WORK_TYPES :
+    activeTab === "organization" ? ORG_TYPES :
+    activeTab === "achievement" ? ACH_TYPES : EDU_TYPES;
 
   return (
     <div className="flex flex-col gap-8">
@@ -232,7 +244,7 @@ export default function AdminExperiencePage() {
         <div className="p-4 text-center text-error bg-error/10 border border-error/20 rounded-md">{error}</div>
       ) : displayed.length === 0 ? (
         <Card className="p-12 text-center" hoverEffect={false}>
-          <p className="text-xs text-foreground-muted mb-4">Belum ada data {activeTab === "work" ? "pengalaman kerja" : "perjalanan karir"}.</p>
+          <p className="text-xs text-foreground-muted mb-4">Belum ada data untuk kategori ini.</p>
           <Button onClick={handleOpenCreate} variant="primary" className="gap-2">
             <Plus size={14} /> Tambah Pertama
           </Button>

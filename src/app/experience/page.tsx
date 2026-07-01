@@ -8,73 +8,56 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import type { ExperienceType } from "@/types";
 import { getDuration } from "@/lib/utils";
-import { Briefcase, Calendar, MapPin, CheckCircle2, Award, GraduationCap, Landmark, Heart, Compass, Loader2 } from "lucide-react";
+import { Briefcase, Calendar, MapPin, CheckCircle2, Award, Landmark, Compass, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import useSWR from "swr";
 import { experiencesApi } from "@/lib/api";
 
-type PageTab = "experience" | "journey";
-type JourneyFilter = "All" | "Achievement" | "Leadership" | "Career" | "Education" | "Volunteer";
+type PageTab = "work" | "organization" | "achievement";
 
 export default function ExperiencePage() {
-  const [activeTab, setActiveTab] = useState<PageTab>("experience");
+  const [activeTab, setActiveTab] = useState<PageTab>("work");
   
   const { data: experiences = [], isLoading } = useSWR("experiences", () =>
     experiencesApi.getAll().then((res) => res.data || [])
   );
-  
-  // Tab 1 state: Experience
-  const [activeType, setActiveType] = useState<ExperienceType | "All">("All");
-  const types: (ExperienceType | "All")[] = [
-    "All",
-    "Professional",
-    "Organizational",
-    "Volunteer",
-    "Freelance",
-  ];
-  
-  // Tab 2 state: Journey
-  const [activeJourneyFilter, setActiveJourneyFilter] = useState<JourneyFilter>("All");
-  const journeyCategories: JourneyFilter[] = [
-    "All",
-    "Achievement",
-    "Leadership",
-    "Career",
-    "Education",
-    "Volunteer",
-  ];
 
-  // Filtering Logic: Professional/Freelance/Organizational/Volunteer
-  const filteredExperience = experiences.filter((exp) => {
-    // Only display career-oriented experiences in Tab 1
-    const isCareerType = ["Professional", "Freelance", "Organizational"].includes(exp.type);
-    if (!isCareerType) return false;
-    
-    return activeType === "All" || exp.type === activeType;
+  // Tab 1: Kerja filters
+  const [activeWorkType, setActiveWorkType] = useState<ExperienceType | "All">("All");
+  const workTypes: (ExperienceType | "All")[] = ["All", "Professional", "Freelance", "Career"];
+  
+  // Tab 2: Organisasi filters
+  const [activeOrgType, setActiveOrgType] = useState<ExperienceType | "All">("All");
+  const orgTypes: (ExperienceType | "All")[] = ["All", "Organizational", "Volunteer"];
+  
+  // Tab 3: Prestasi filters
+  const [activeAchType, setActiveAchType] = useState<ExperienceType | "All">("All");
+  const achTypes: (ExperienceType | "All")[] = ["All", "Achievement", "Leadership"];
+
+  // Filtering Logic
+  const filteredData = experiences.filter((exp) => {
+    if (activeTab === "work") {
+      if (!["Professional", "Freelance", "Career"].includes(exp.type)) return false;
+      return activeWorkType === "All" || exp.type === activeWorkType;
+    }
+    if (activeTab === "organization") {
+      if (!["Organizational", "Volunteer"].includes(exp.type)) return false;
+      return activeOrgType === "All" || exp.type === activeOrgType;
+    }
+    if (activeTab === "achievement") {
+      if (!["Achievement", "Leadership"].includes(exp.type)) return false;
+      return activeAchType === "All" || exp.type === activeAchType;
+    }
+    return false;
   });
 
-  // Filtering Logic: Milestones (Education/Achievement/Leadership/Volunteer)
-  const filteredJourney = experiences.filter((item) => {
-    // Only display milestones in Tab 2
-    const isJourneyType = ["Education", "Achievement", "Leadership", "Volunteer"].includes(item.type);
-    if (!isJourneyType) return false;
-    
-    return activeJourneyFilter === "All" || item.type === activeJourneyFilter;
-  });
-
-  // Journey Helper Icons & Colors
+  // Journey Helper Icons & Colors (For Prestasi)
   const getJourneyIcon = (type: string) => {
     switch (type) {
       case "Achievement":
         return Award;
       case "Leadership":
         return Landmark;
-      case "Career":
-        return Briefcase;
-      case "Education":
-        return GraduationCap;
-      case "Volunteer":
-        return Heart;
       default:
         return Compass;
     }
@@ -86,12 +69,6 @@ export default function ExperiencePage() {
         return "text-warning border-warning bg-warning/5";
       case "Leadership":
         return "text-accent border-accent bg-accent/5";
-      case "Career":
-        return "text-violet border-violet bg-violet/5";
-      case "Education":
-        return "text-success border-success bg-success/5";
-      case "Volunteer":
-        return "text-error border-error bg-error/5";
       default:
         return "text-foreground-muted border-border bg-background-overlay";
     }
@@ -105,50 +82,60 @@ export default function ExperiencePage() {
           {/* Header */}
           <div className="text-center max-w-2xl mx-auto mb-12">
             <h1 className="font-display text-h1 text-foreground mb-4">
-              Riwayat Pengalaman & Rekam Jejak
+              Riwayat Pengalaman & Prestasi
             </h1>
             <p className="text-body text-foreground-muted">
-              Eksplorasi riwayat profesional karir organisasi, serta tonggak pencapaian akademis dan kepemimpinan.
+              Eksplorasi riwayat profesional karir, keaktifan organisasi, serta pencapaian dan kepemimpinan.
             </p>
           </div>
 
           {/* Tab Switcher */}
           <div className="flex justify-center mb-8">
-            <div className="inline-flex rounded-lg bg-background-elevated p-1 border border-border">
+            <div className="inline-flex flex-wrap justify-center rounded-lg bg-background-elevated p-1 border border-border gap-1">
               <button
-                onClick={() => setActiveTab("experience")}
-                className={`px-6 py-2.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-                  activeTab === "experience"
+                onClick={() => setActiveTab("work")}
+                className={`px-4 sm:px-6 py-2.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                  activeTab === "work"
                     ? "bg-accent text-accent-foreground shadow-sm"
                     : "text-foreground-muted hover:text-foreground"
                 }`}
               >
-                Karir & Organisasi
+                Pengalaman Kerja
               </button>
               <button
-                onClick={() => setActiveTab("journey")}
-                className={`px-6 py-2.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-                  activeTab === "journey"
+                onClick={() => setActiveTab("organization")}
+                className={`px-4 sm:px-6 py-2.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                  activeTab === "organization"
                     ? "bg-accent text-accent-foreground shadow-sm"
                     : "text-foreground-muted hover:text-foreground"
                 }`}
               >
-                Pencapaian & Milestones
+                Pengalaman Organisasi
+              </button>
+              <button
+                onClick={() => setActiveTab("achievement")}
+                className={`px-4 sm:px-6 py-2.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                  activeTab === "achievement"
+                    ? "bg-accent text-accent-foreground shadow-sm"
+                    : "text-foreground-muted hover:text-foreground"
+                }`}
+              >
+                Prestasi
               </button>
             </div>
           </div>
 
-          {/* TAB 1: EXPERIENCE */}
-          {activeTab === "experience" && (
+          {/* TAB 1 & 2: WORK & ORGANIZATION */}
+          {(activeTab === "work" || activeTab === "organization") && (
             <>
               {/* Type Filter Tabs */}
               <div className="flex flex-wrap justify-center gap-2 border-b border-border pb-6 mb-12">
-                {types.map((t) => (
+                {(activeTab === "work" ? workTypes : orgTypes).map((t) => (
                   <button
                     key={t}
-                    onClick={() => setActiveType(t)}
+                    onClick={() => activeTab === "work" ? setActiveWorkType(t) : setActiveOrgType(t)}
                     className={`px-4 py-2 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
-                      activeType === t
+                      (activeTab === "work" ? activeWorkType : activeOrgType) === t
                         ? "bg-accent text-accent-foreground"
                         : "text-foreground-muted hover:bg-background-elevated hover:text-foreground"
                     }`}
@@ -163,9 +150,9 @@ export default function ExperiencePage() {
                 <div className="flex justify-center py-20">
                   <Loader2 className="animate-spin text-accent" size={32} />
                 </div>
-              ) : filteredExperience.length > 0 ? (
+              ) : filteredData.length > 0 ? (
                 <div className="relative max-w-3xl mx-auto pl-6 border-l-2 border-border/80 flex flex-col gap-10">
-                  {filteredExperience.map((exp, idx) => {
+                  {filteredData.map((exp, idx) => {
                     const duration = getDuration(exp.startDate, exp.endDate);
                     return (
                       <motion.div
@@ -249,17 +236,17 @@ export default function ExperiencePage() {
             </>
           )}
 
-          {/* TAB 2: JOURNEY */}
-          {activeTab === "journey" && (
+          {/* TAB 3: ACHIEVEMENT */}
+          {activeTab === "achievement" && (
             <>
               {/* Journey Filter Tabs */}
               <div className="flex flex-wrap justify-center gap-2 border-b border-border pb-6 mb-12">
-                {journeyCategories.map((cat) => (
+                {achTypes.map((cat) => (
                   <button
                     key={cat}
-                    onClick={() => setActiveJourneyFilter(cat)}
+                    onClick={() => setActiveAchType(cat)}
                     className={`px-4 py-2 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
-                      activeJourneyFilter === cat
+                      activeAchType === cat
                         ? "bg-accent text-accent-foreground"
                         : "text-foreground-muted hover:bg-background-elevated hover:text-foreground"
                     }`}
@@ -274,9 +261,9 @@ export default function ExperiencePage() {
                 <div className="flex justify-center py-20">
                   <Loader2 className="animate-spin text-accent" size={32} />
                 </div>
-              ) : filteredJourney.length > 0 ? (
+              ) : filteredData.length > 0 ? (
                 <div className="relative max-w-3xl mx-auto pl-6 border-l-2 border-border/80 flex flex-col gap-10">
-                  {filteredJourney.map((item, idx) => {
+                  {filteredData.map((item, idx) => {
                     const IconComponent = getJourneyIcon(item.type);
                     const colorClass = getJourneyColor(item.type);
 
@@ -330,7 +317,7 @@ export default function ExperiencePage() {
                 </div>
               ) : (
                 <div className="text-center py-20">
-                  <p className="text-body-lg text-foreground-muted">Jalur perjalanan tidak ditemukan.</p>
+                  <p className="text-body-lg text-foreground-muted">Prestasi tidak ditemukan.</p>
                 </div>
               )}
             </>

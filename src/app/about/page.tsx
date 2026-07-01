@@ -6,12 +6,33 @@ import { Container } from "@/components/public/Container";
 import { Card } from "@/components/ui/Card";
 import { SITE_CONFIG } from "@/constants/site";
 import { User, Award, Shield, FileText, ArrowRight, Star } from "lucide-react";
+import { useState } from "react";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { fadeUpVariants, staggerContainerVariants } from "@/lib/animations";
 import fotoAbout from "@/assets/foto-about.jpg";
+import useSWR from "swr";
+import { experiencesApi, settingsApi } from "@/lib/api";
+import { Calendar, MapPin, X, GraduationCap } from "lucide-react";
 
 export default function AboutPage() {
+  const [isEducationModalOpen, setIsEducationModalOpen] = useState(false);
+
+  const { data: experiences = [] } = useSWR("experiences", () =>
+    experiencesApi.getAll().then((res) => res.data || [])
+  );
+  
+  const { data: settings = [] } = useSWR("settings", () =>
+    settingsApi.getAll().then((res) => res.data || [])
+  );
+
+  const dynamicResumeUrl = settings.find(s => s.key === "resume_url")?.value;
+  const resumeUrl = dynamicResumeUrl || SITE_CONFIG.resumeUrl;
+
+  const educationHistory = experiences.filter((exp) => ["Education", "Pendidikan"].includes(exp.type));
+  // Asumsi data sudah terurut dari API (terbaru di atas)
+  const latestEducation = educationHistory.length > 0 ? educationHistory[0] : null;
+
   const values = [
     {
       title: "Kualitas & Presisi",
@@ -78,7 +99,7 @@ export default function AboutPage() {
                 </motion.p>
 
                 <motion.div variants={fadeUpVariants} className="flex flex-wrap gap-4 mt-4">
-                  <a href={SITE_CONFIG.resumeUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center font-sans font-medium rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-accent cursor-pointer bg-accent text-accent-foreground hover:bg-accent-hover px-4 py-2 text-caption gap-2">
+                  <a href={resumeUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center font-sans font-medium rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-accent cursor-pointer bg-accent text-accent-foreground hover:bg-accent-hover px-4 py-2 text-caption gap-2">
                     Unduh Resume / CV
                     <FileText size={16} />
                   </a>
@@ -124,10 +145,97 @@ export default function AboutPage() {
                 ))}
               </motion.div>
             </div>
+            {/* Jenjang Pendidikan Section */}
+            {latestEducation && (
+              <motion.div variants={fadeUpVariants} className="flex flex-col gap-6">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="h-10 w-10 rounded-full bg-success/10 border border-success/20 flex items-center justify-center text-success">
+                    <GraduationCap size={20} />
+                  </div>
+                  <div>
+                    <h2 className="font-display text-h3 text-foreground">Jenjang Pendidikan Terkini</h2>
+                    <p className="text-[10px] text-foreground-muted">Riwayat akademis utama</p>
+                  </div>
+                </div>
+
+                <Card className="p-6 relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6" hoverEffect={true}>
+                  <div className="flex-1">
+                    <h3 className="font-display text-h3 font-bold text-foreground mb-1">{latestEducation.title}</h3>
+                    <p className="text-sm font-medium text-foreground-muted mb-3">{latestEducation.organization}</p>
+                    <div className="flex flex-wrap gap-4 text-xs text-foreground-subtle">
+                      <span className="flex items-center gap-1.5"><Calendar size={14} />{latestEducation.startDate} — {latestEducation.isCurrent ? "Sekarang" : (latestEducation.endDate || "-")}</span>
+                      {latestEducation.location && <span className="flex items-center gap-1.5"><MapPin size={14} />{latestEducation.location}</span>}
+                    </div>
+                  </div>
+                  {educationHistory.length > 1 && (
+                    <button
+                      onClick={() => setIsEducationModalOpen(true)}
+                      className="whitespace-nowrap px-4 py-2 bg-background-elevated hover:bg-background-overlay border border-border rounded-md text-xs font-semibold text-foreground transition-colors"
+                    >
+                      Lihat Selengkapnya
+                    </button>
+                  )}
+                </Card>
+              </motion.div>
+            )}
           </motion.div>
         </Container>
       </main>
+
+      {/* Education Modal (Kartu Melayang) */}
+      <AnimatePresence>
+        {isEducationModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsEducationModalOpen(false)}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 15 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 15 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative max-w-2xl w-full bg-background-elevated border border-border rounded-xl shadow-glow-accent overflow-hidden max-h-[85vh] flex flex-col"
+            >
+              <div className="flex justify-between items-center p-6 border-b border-border">
+                <div className="flex items-center gap-3">
+                  <GraduationCap className="text-success" size={24} />
+                  <h2 className="font-display text-h2 font-bold text-foreground">Riwayat Pendidikan</h2>
+                </div>
+                <button
+                  onClick={() => setIsEducationModalOpen(false)}
+                  className="rounded-full p-2 hover:bg-background-overlay text-foreground-muted hover:text-foreground transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              
+              <div className="p-6 overflow-y-auto flex flex-col gap-6 relative">
+                <div className="absolute left-9 top-6 bottom-6 w-0.5 bg-border"></div>
+                {educationHistory.map((edu) => (
+                  <div key={edu.id} className="relative pl-10">
+                    <span className="absolute left-[-5px] top-1 h-4 w-4 rounded-full border-2 border-success bg-background-elevated z-10 flex items-center justify-center shadow-sm">
+                      <span className="h-1.5 w-1.5 rounded-full bg-success"></span>
+                    </span>
+                    <h3 className="font-display text-body font-bold text-foreground">{edu.title}</h3>
+                    <p className="text-xs text-foreground-muted mb-2">{edu.organization}</p>
+                    <div className="flex items-center gap-3 text-[10px] text-foreground-subtle mb-2">
+                      <span className="flex items-center gap-1"><Calendar size={12} />{edu.startDate} — {edu.isCurrent ? "Sekarang" : (edu.endDate || "-")}</span>
+                      {edu.location && <span className="flex items-center gap-1"><MapPin size={12} />{edu.location}</span>}
+                    </div>
+                    {edu.description && <p className="text-xs text-foreground-muted leading-relaxed">{edu.description}</p>}
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <Footer />
     </>
   );
 }
+

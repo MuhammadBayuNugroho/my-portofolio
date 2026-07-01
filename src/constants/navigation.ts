@@ -11,6 +11,7 @@ import {
   MessageSquare,
   Mail,
   LayoutDashboard,
+  Settings,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────
@@ -55,4 +56,5 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { label: "Blog",         href: "/admin/blog",         icon: BookOpen },
   { label: "Testimonials", href: "/admin/testimonials", icon: MessageSquare },
   { label: "Contact",      href: "/admin/contact",      icon: Mail },
+  { label: "Pengaturan",   href: "/admin/settings",     icon: Settings },
 ];
