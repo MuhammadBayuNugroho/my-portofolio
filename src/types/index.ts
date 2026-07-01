@@ -45,12 +45,7 @@ export interface BaseEntity {
 // PROJECT MODULE
 // ─────────────────────────────────────────────────────────────────
 
-export type ProjectCategory =
-  | "Web"
-  | "Graphic Design"
-  | "Mobile App"
-  | "Open Source"
-  | "UI/UX";
+export type ProjectCategory = string;
 
 export interface Project extends BaseEntity {
   title: string;
@@ -74,14 +69,7 @@ export interface Project extends BaseEntity {
 // GALLERY MODULE
 // ─────────────────────────────────────────────────────────────────
 
-export type GalleryCategory =
-  | "Web Design"
-  | "Graphic Design"
-  | "Branding"
-  | "Illustration"
-  | "Photography"
-  | "UI/UX"
-  | "Motion";
+export type GalleryCategory = string;
 
 export interface GalleryItem extends BaseEntity {
   title: string;
@@ -145,15 +133,7 @@ export interface Skill extends BaseEntity {
 // EXPERIENCE MODULE
 // ─────────────────────────────────────────────────────────────────
 
-export type ExperienceType =
-  | "Professional"
-  | "Organizational"
-  | "Freelance"
-  | "Education"
-  | "Career"
-  | "Leadership"
-  | "Achievement"
-  | "Volunteer";
+export type ExperienceType = string;
 
 export interface Experience extends BaseEntity {
   title: string;           // Job/role title
@@ -173,15 +153,7 @@ export interface Experience extends BaseEntity {
 // CERTIFICATE MODULE
 // ─────────────────────────────────────────────────────────────────
 
-export type CertificateCategory =
-  | "Frontend"
-  | "Design"
-  | "Leadership"
-  | "Backend"
-  | "Cloud"
-  | "Data"
-  | "Soft Skills"
-  | "Other";
+export type CertificateCategory = string;
 
 export interface Certificate extends BaseEntity {
   title: string;

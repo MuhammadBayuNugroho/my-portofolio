@@ -8,6 +8,48 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Plus, Edit2, Trash2, Loader2, Upload } from "lucide-react";
 
+// ─── Flexible Category Input ────────────────────────────────────
+function CategoryInput({
+  value,
+  onChange,
+  suggestions,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  suggestions: string[];
+}) {
+  const [open, setOpen] = useState(false);
+  const filtered = suggestions.filter(
+    (s) => s.toLowerCase().includes(value.toLowerCase()) && s !== value
+  );
+  return (
+    <div className="relative">
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => { onChange(e.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs focus-visible:outline-2 focus-visible:outline-accent"
+        placeholder="Contoh: Frontend, Leadership, Cloud..."
+        required
+      />
+      {open && filtered.length > 0 && (
+        <div className="absolute top-full left-0 right-0 z-20 mt-1 rounded-md border border-border bg-background-elevated shadow-lg overflow-hidden">
+          {filtered.map((s) => (
+            <button key={s} type="button" onMouseDown={() => { onChange(s); setOpen(false); }}
+              className="w-full text-left px-3 py-2 text-xs hover:bg-background-overlay text-foreground-muted hover:text-foreground transition-colors">
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const DEFAULT_CATEGORIES = ["Frontend", "Design", "Leadership", "Backend", "Cloud", "Data", "Soft Skills", "Other"];
+
 export default function AdminCertificatesPage() {
   const { user } = useAuth();
   const [certs, setCerts] = useState<Certificate[]>([]);
@@ -30,6 +72,11 @@ export default function AdminCertificatesPage() {
   const [featured, setFeatured] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+
+  const existingCategories = React.useMemo(() => {
+    const cats = [...new Set(certs.map((c) => c.category))];
+    return [...new Set([...DEFAULT_CATEGORIES, ...cats])];
+  }, [certs]);
 
   const fetchCerts = async () => {
     setIsLoading(true);
@@ -233,16 +280,11 @@ export default function AdminCertificatesPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Kategori</label>
-                  <select value={category} onChange={(e) => setCategory(e.target.value as CertificateCategory)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs">
-                    <option value="Frontend">Frontend</option>
-                    <option value="Design">Design</option>
-                    <option value="Leadership">Leadership</option>
-                    <option value="Backend">Backend</option>
-                    <option value="Cloud">Cloud</option>
-                    <option value="Data">Data</option>
-                    <option value="Soft Skills">Soft Skills</option>
-                  </select>
+                  <label className="text-xs font-semibold text-foreground-muted">
+                    Kategori
+                    <span className="ml-1 text-[9px] text-foreground-subtle font-normal">(ketik untuk buat baru)</span>
+                  </label>
+                  <CategoryInput value={category} onChange={(v) => setCategory(v as CertificateCategory)} suggestions={existingCategories} />
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-semibold text-foreground-muted">Status</label>

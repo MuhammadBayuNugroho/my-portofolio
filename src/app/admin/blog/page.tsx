@@ -8,6 +8,48 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Plus, Edit2, Trash2, Loader2, Upload } from "lucide-react";
 
+// ─── Flexible Category Input ────────────────────────────────────
+function CategoryInput({
+  value,
+  onChange,
+  suggestions,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  suggestions: string[];
+}) {
+  const [open, setOpen] = useState(false);
+  const filtered = suggestions.filter(
+    (s) => s.toLowerCase().includes(value.toLowerCase()) && s !== value
+  );
+  return (
+    <div className="relative">
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => { onChange(e.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs focus-visible:outline-2 focus-visible:outline-accent"
+        placeholder="Contoh: Tech, Design, Tutorial..."
+        required
+      />
+      {open && filtered.length > 0 && (
+        <div className="absolute top-full left-0 right-0 z-20 mt-1 rounded-md border border-border bg-background-elevated shadow-lg overflow-hidden">
+          {filtered.map((s) => (
+            <button key={s} type="button" onMouseDown={() => { onChange(s); setOpen(false); }}
+              className="w-full text-left px-3 py-2 text-xs hover:bg-background-overlay text-foreground-muted hover:text-foreground transition-colors">
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const DEFAULT_CATEGORIES = ["Tech", "Design", "Tutorial", "Lifestyle"];
+
 export default function AdminBlogPage() {
   const { user } = useAuth();
   const [blogs, setBlogs] = useState<Blog[]>([]);
@@ -29,6 +71,11 @@ export default function AdminBlogPage() {
   const [readingTime, setReadingTime] = useState(5);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+
+  const existingCategories = React.useMemo(() => {
+    const cats = [...new Set(blogs.map((b) => b.category))];
+    return [...new Set([...DEFAULT_CATEGORIES, ...cats])];
+  }, [blogs]);
 
   const fetchBlogs = async () => {
     setIsLoading(true);
@@ -287,15 +334,11 @@ export default function AdminBlogPage() {
                   </div>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Kategori</label>
-                  <input
-                    type="text"
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs"
-                    placeholder="Tech, Design, Lifestyle"
-                    required
-                  />
+                  <label className="text-xs font-semibold text-foreground-muted">
+                    Kategori
+                    <span className="ml-1 text-[9px] text-foreground-subtle font-normal">(ketik untuk buat baru)</span>
+                  </label>
+                  <CategoryInput value={category} onChange={setCategory} suggestions={existingCategories} />
                 </div>
               </div>
 
