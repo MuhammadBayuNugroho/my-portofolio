@@ -9,6 +9,7 @@ import { User, Award, Shield, FileText, ArrowRight, Star } from "lucide-react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { fadeUpVariants, staggerContainerVariants } from "@/lib/animations";
+import fotoAbout from "@/assets/foto-about.jpg";
 
 export default function AboutPage() {
   const values = [
@@ -48,11 +49,12 @@ export default function AboutPage() {
               {/* Profile Photo Card */}
               <motion.div variants={fadeUpVariants} className="lg:col-span-5 relative aspect-square max-w-sm mx-auto lg:max-w-none w-full rounded-2xl overflow-hidden border border-border bg-background-elevated shadow-card">
                 <Image
-                  src="/foto-about.jpg"
+                  src={fotoAbout}
                   alt={SITE_CONFIG.name}
                   fill
                   priority
                   className="object-cover object-top"
+                  unoptimized
                 />
               </motion.div>
 
