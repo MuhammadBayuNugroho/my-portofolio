@@ -17,14 +17,6 @@ var ADMIN_PASSWORD = scriptProperties.getProperty('ADMIN_PASSWORD') || 'admin123
 var SPREADSHEET_ID = scriptProperties.getProperty('SPREADSHEET_ID') || '1Tyc5A29pF8Zkjt1lYktGwrQoXcTUZeSKmvqzQlr9JWc';
 var MEDIA_FOLDER_ID = scriptProperties.getProperty('MEDIA_FOLDER_ID') || '1JMRhUy7rM1y6IXULCautTwNWO5qXp-ih'; // Diisi dengan ID Folder Google Drive Aset
 
-// ─────────────────────────────────────────────────────────────────
-// KONFIGURASI CLOUDINARY (Primary Image CDN)
-// Isi di: Apps Script Editor → Project Settings → Script Properties
-// ─────────────────────────────────────────────────────────────────
-var CLOUDINARY_CLOUD_NAME = scriptProperties.getProperty('CLOUDINARY_CLOUD_NAME') || '';
-var CLOUDINARY_API_KEY    = scriptProperties.getProperty('CLOUDINARY_API_KEY')    || '';
-var CLOUDINARY_API_SECRET = scriptProperties.getProperty('CLOUDINARY_API_SECRET') || '';
-
 /**
  * Mendapatkan Spreadsheet instance aktif
  */

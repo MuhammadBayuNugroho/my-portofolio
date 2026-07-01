@@ -1,7 +1,19 @@
 /**
- * src/lib/api.ts — API Client Layer with Fallback Repository Pattern
+ * src/lib/api.ts — API Client Layer
  *
- * This module acts as the Single Source of Truth for data access.
+ * Berkomunikasi dengan backend Google Apps Script (GAS).
+ *
+ * ⚠️ CATATAN PENTING ARSITEKTUR GAS + CORS:
+ * Google Apps Script Web App TIDAK mendukung CORS preflight (OPTIONS request).
+ * Ini berarti:
+ * 1. POST request TIDAK BOLEH menggunakan custom header "Content-Type: application/json"
+ *    karena akan memicu preflight → CORS error.
+ * 2. Solusi: kirim body sebagai JSON string tanpa meng-set Content-Type secara manual
+ *    (browser akan menganggap ini sebagai "simple request" dan tidak kirim preflight).
+ * 3. Token auth dikirim via URL query param (?token=...) bukan Authorization header.
+ * 4. GET request normal, aman, tidak ada CORS issue.
+ *
+ * Referensi: https://developers.google.com/apps-script/guides/web#request_parameters
  */
 
 import type {
@@ -16,55 +28,79 @@ import type {
   ApiResponse
 } from "@/types";
 
+// ─────────────────────────────────────────────────────────────────
+// CONFIGURATION
+// ─────────────────────────────────────────────────────────────────
 const BASE_URL = process.env.NEXT_PUBLIC_GAS_BASE_URL ?? "";
-const IS_REAL_API = BASE_URL && !BASE_URL.includes("YOUR_SCRIPT_ID");
+
+/**
+ * IS_REAL_API — true jika env var sudah dikonfigurasi dengan benar.
+ * Jika false, semua API call menggunakan fallback simulator (data kosong).
+ */
+const IS_REAL_API = Boolean(
+  BASE_URL &&
+  BASE_URL.trim() !== "" &&
+  !BASE_URL.includes("YOUR_SCRIPT_ID") &&
+  BASE_URL.startsWith("https://script.google.com")
+);
+
+// Log sekali saat module di-load (hanya di browser, tidak saat SSG)
+if (typeof window !== "undefined") {
+  console.log(
+    `[API] Mode: ${IS_REAL_API ? "🟢 REAL (GAS)" : "🔴 SIMULATOR"}`,
+    IS_REAL_API ? BASE_URL.substring(0, 60) + "..." : "BASE_URL tidak dikonfigurasi"
+  );
+}
 
 // ─────────────────────────────────────────────────────────────────
-// DUMMY SIMULATOR SYSTEM
+// DUMMY SIMULATOR
 // ─────────────────────────────────────────────────────────────────
 async function simulateNetwork<T>(data: T): Promise<ApiResponse<T>> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        success: true,
-        data,
-      });
-    }, 150); // Simulate network latency
-  });
+  return new Promise((resolve) =>
+    setTimeout(() => resolve({ success: true, data }), 200)
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────
 // CLIENT-SIDE IN-MEMORY CACHE
+// Strategi: satu request "get_all_data" untuk semua data,
+// lalu setiap modul mengambil field-nya masing-masing dari cache.
 // ─────────────────────────────────────────────────────────────────
-let cachedData: {
-  settings: SiteSetting[];
-  skills: Skill[];
-  projects: Project[];
-  experiences: Experience[];
+type CachedData = {
+  settings:     SiteSetting[];
+  skills:       Skill[];
+  projects:     Project[];
+  experiences:  Experience[];
   certificates: Certificate[];
-  blogs: Blog[];
+  blogs:        Blog[];
   testimonials: Testimonial[];
-} | null = null;
+};
 
-let fetchAllPromise: Promise<any> | null = null;
+let cachedData: CachedData | null = null;
+let fetchAllPromise: Promise<CachedData | null> | null = null;
 
+/** Hapus cache — dipanggil setelah setiap operasi tulis (CRUD) */
 export function clearApiCache() {
   cachedData = null;
+  fetchAllPromise = null;
 }
 
-async function getCachedField<K extends keyof NonNullable<typeof cachedData>>(
+async function getCachedField<K extends keyof CachedData>(
   field: K
-): Promise<ApiResponse<NonNullable<typeof cachedData>[K]>> {
+): Promise<ApiResponse<CachedData[K]>> {
+  // Return langsung dari cache jika sudah ada
   if (cachedData && cachedData[field]) {
     return { success: true, data: cachedData[field] };
   }
 
+  // Jika sudah ada request yang berjalan, tunggu selesai
   if (fetchAllPromise) {
     await fetchAllPromise;
-    return { success: true, data: (cachedData?.[field] ?? []) as NonNullable<typeof cachedData>[K] };
+    return { success: true, data: (cachedData?.[field] ?? []) as CachedData[K] };
   }
 
-  fetchAllPromise = apiFetch<any>("get_all_data")
+  // Belum ada cache dan belum ada request berjalan — fetch sekarang
+  fetchAllPromise = apiFetch<CachedData>("get_all_data")
     .then((res) => {
       if (res.success && res.data) {
         cachedData = res.data;
@@ -78,137 +114,176 @@ async function getCachedField<K extends keyof NonNullable<typeof cachedData>>(
     });
 
   await fetchAllPromise;
-  return { success: true, data: (cachedData?.[field] ?? []) as NonNullable<typeof cachedData>[K] };
+  return { success: true, data: (cachedData?.[field] ?? []) as CachedData[K] };
 }
 
 // ─────────────────────────────────────────────────────────────────
-// HTTP CLIENT
+// HTTP CLIENT — CORE FUNCTION
 // ─────────────────────────────────────────────────────────────────
+
+/**
+ * apiFetch — Generic HTTP client untuk Google Apps Script.
+ *
+ * Desain khusus untuk menghindari CORS preflight:
+ * - GET: URL params saja, tidak ada body.
+ * - POST: Body sebagai JSON string, TANPA Content-Type header eksplisit.
+ *   Token dikirim via URL query param `?token=...`.
+ */
 async function apiFetch<T>(
   action: string,
-  options: { method?: "GET" | "POST"; body?: unknown; token?: string } = {}
+  options: {
+    method?: "GET" | "POST";
+    body?: unknown;
+    token?: string;
+  } = {}
 ): Promise<ApiResponse<T>> {
   if (!IS_REAL_API) {
-    throw new Error("No real API base URL set");
+    throw new Error("GAS API tidak dikonfigurasi (NEXT_PUBLIC_GAS_BASE_URL kosong atau tidak valid).");
   }
 
+  // Build URL dengan action & params
   const url = new URL(BASE_URL);
-
-  // Parse action containing query parameters (e.g. get_projects&category=Web)
   const parts = action.split("&");
   url.searchParams.set("action", parts[0]);
   for (let i = 1; i < parts.length; i++) {
     const [key, val] = parts[i].split("=");
-    if (key) {
-      url.searchParams.set(key, val || "");
-    }
+    if (key) url.searchParams.set(key, val ?? "");
   }
 
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-  };
-
+  // Token selalu dikirim via URL param (menghindari Authorization header → no preflight)
   if (options.token) {
-    headers["Authorization"] = `Bearer ${options.token}`;
     url.searchParams.set("token", options.token);
   }
 
-  const response = await fetch(url.toString(), {
+  const fetchOptions: RequestInit = {
     method: options.method ?? "GET",
-    headers,
-    body: options.body ? JSON.stringify(options.body) : undefined,
-  });
+    // ⚠️ JANGAN set Content-Type secara eksplisit untuk POST ke GAS.
+    // Browser secara default mengirimnya sebagai text/plain yang tidak
+    // memerlukan preflight CORS. GAS tetap bisa parse JSON dari postData.contents.
+    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+  };
 
-  if (!response.ok) {
-    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+  let response: Response;
+  try {
+    response = await fetch(url.toString(), fetchOptions);
+  } catch (networkError) {
+    throw new Error(
+      `Network error: Tidak bisa menjangkau GAS API. Pastikan URL benar dan GAS sudah di-deploy dengan akses "Anyone". Detail: ${networkError instanceof Error ? networkError.message : String(networkError)}`
+    );
   }
 
-  return response.json();
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  }
+
+  const json: ApiResponse<T> = await response.json();
+
+  // GAS mengembalikan { success: false, error: "..." } untuk error logika
+  if (!json.success) {
+    throw new Error(json.error ?? "GAS API mengembalikan error tanpa pesan.");
+  }
+
+  return json;
 }
 
-
 // ─────────────────────────────────────────────────────────────────
-// REPOSITORY IMPLEMENTATION
+// AUTH API
 // ─────────────────────────────────────────────────────────────────
-
 export const authApi = {
-  login: async (username: string, password: string) => {
+  login: async (username: string, password: string): Promise<ApiResponse<{ token: string; expiresAt: string }>> => {
     if (IS_REAL_API) {
       return apiFetch<{ token: string; expiresAt: string }>("login", {
         method: "POST",
         body: { username, password },
       });
     }
-    // Static Login simulation for testing admin panels
-    if (username === "admin" && password === "admin") {
+    // Simulator fallback untuk development lokal
+    if (username === "admin" && password === "admin123") {
       return simulateNetwork({
-        token: "fake-jwt-token-mbn-12345",
+        token: "dev-token-mbn-simulator",
         expiresAt: new Date(Date.now() + 86400000).toISOString(),
       });
     }
-    throw new Error("Kredensial salah (Lokal dev default: admin/admin)");
+    throw new Error("Kredensial salah. (Dev default: admin / admin123)");
   },
 };
 
+// ─────────────────────────────────────────────────────────────────
+// SETTINGS API
+// ─────────────────────────────────────────────────────────────────
 export const settingsApi = {
   getAll: async (): Promise<ApiResponse<SiteSetting[]>> => {
-    if (IS_REAL_API) {
-      return getCachedField("settings");
-    }
+    if (IS_REAL_API) return getCachedField("settings");
     return simulateNetwork([]);
   },
-  upsert: async (data: { key: string; value: string; description?: string; type: string }, token: string) => {
+
+  upsert: async (
+    data: { key: string; value: string; description?: string; type: string },
+    token: string
+  ): Promise<ApiResponse<SiteSetting>> => {
     if (IS_REAL_API) {
-      const res = await apiFetch("upsert_setting", { method: "POST", body: data, token });
+      const res = await apiFetch<SiteSetting>("upsert_setting", {
+        method: "POST",
+        body: data,
+        token,
+      });
       clearApiCache();
       return res;
     }
-    return simulateNetwork({ message: "Setting updated in simulator" });
-  }
+    return simulateNetwork(data as SiteSetting);
+  },
 };
 
+// ─────────────────────────────────────────────────────────────────
+// SKILLS API
+// ─────────────────────────────────────────────────────────────────
 export const skillsApi = {
   getAll: async (): Promise<ApiResponse<Skill[]>> => {
-    if (IS_REAL_API) {
-      return getCachedField("skills");
-    }
+    if (IS_REAL_API) return getCachedField("skills");
     return simulateNetwork([]);
   },
-  create: async (data: unknown, token: string) => {
+
+  create: async (data: Partial<Skill>, token: string): Promise<ApiResponse<Skill>> => {
     if (IS_REAL_API) {
-      const res = await apiFetch("create_skill", { method: "POST", body: data, token });
+      const res = await apiFetch<Skill>("create_skill", { method: "POST", body: data, token });
       clearApiCache();
       return res;
     }
-    return simulateNetwork({ message: "Skill created in simulator" });
+    return simulateNetwork(data as Skill);
   },
-  update: async (id: string, data: unknown, token: string) => {
+
+  update: async (id: string, data: Partial<Skill>, token: string): Promise<ApiResponse<Skill>> => {
     if (IS_REAL_API) {
-      const res = await apiFetch("update_skill", { method: "POST", body: { id, ...data as object }, token });
+      const res = await apiFetch<Skill>("update_skill", { method: "POST", body: { id, ...data }, token });
       clearApiCache();
       return res;
     }
-    return simulateNetwork({ message: "Skill updated in simulator" });
+    return simulateNetwork({ id, ...data } as Skill);
   },
-  delete: async (id: string, token: string) => {
+
+  delete: async (id: string, token: string): Promise<ApiResponse<{ deleted: boolean; id: string }>> => {
     if (IS_REAL_API) {
-      const res = await apiFetch("delete_skill", { method: "POST", body: { id }, token });
+      const res = await apiFetch<{ deleted: boolean; id: string }>("delete_skill", {
+        method: "POST",
+        body: { id },
+        token,
+      });
       clearApiCache();
       return res;
     }
-    return simulateNetwork({ message: "Skill deleted in simulator" });
-  }
+    return simulateNetwork({ deleted: true, id });
+  },
 };
 
+// ─────────────────────────────────────────────────────────────────
+// PROJECTS API
+// ─────────────────────────────────────────────────────────────────
 export const projectsApi = {
   getAll: async (params?: { category?: string }): Promise<ApiResponse<Project[]>> => {
     if (IS_REAL_API) {
       const res = await getCachedField("projects");
       if (res.success && res.data && params?.category) {
-        return {
-          success: true,
-          data: res.data.filter((p) => p.category === params.category),
-        };
+        return { success: true, data: res.data.filter((p) => p.category === params.category) };
       }
       return res;
     }
@@ -218,227 +293,262 @@ export const projectsApi = {
   getBySlug: async (slug: string): Promise<ApiResponse<Project>> => {
     if (IS_REAL_API) {
       const res = await getCachedField("projects");
-      if (res.success && res.data) {
-        const project = res.data.find((p) => p.slug === slug);
-        if (project) {
-          return { success: true, data: project };
-        }
-      }
-      throw new Error(`Project with slug '${slug}' not found.`);
+      const found = res.data?.find((p) => p.slug === slug);
+      if (found) return { success: true, data: found };
+      throw new Error(`Proyek slug '${slug}' tidak ditemukan.`);
     }
-    throw new Error("Project not found (API disabled)");
+    throw new Error("Proyek tidak ditemukan (API simulator).");
   },
 
-  create: async (data: unknown, token: string) => {
+  create: async (data: Partial<Project>, token: string): Promise<ApiResponse<Project>> => {
     if (IS_REAL_API) {
-      const res = await apiFetch("create_project", { method: "POST", body: data, token });
+      const res = await apiFetch<Project>("create_project", { method: "POST", body: data, token });
       clearApiCache();
       return res;
     }
-    return simulateNetwork({ message: "Project created in simulator" });
+    return simulateNetwork(data as Project);
   },
 
-  update: async (id: string, data: unknown, token: string) => {
+  update: async (id: string, data: Partial<Project>, token: string): Promise<ApiResponse<Project>> => {
     if (IS_REAL_API) {
-      const res = await apiFetch("update_project", { method: "POST", body: { id, ...data as object }, token });
+      const res = await apiFetch<Project>("update_project", { method: "POST", body: { id, ...data }, token });
       clearApiCache();
       return res;
     }
-    return simulateNetwork({ message: "Project updated in simulator" });
+    return simulateNetwork({ id, ...data } as Project);
   },
 
-  delete: async (id: string, token: string) => {
+  delete: async (id: string, token: string): Promise<ApiResponse<{ deleted: boolean; id: string }>> => {
     if (IS_REAL_API) {
-      const res = await apiFetch("delete_project", { method: "POST", body: { id }, token });
+      const res = await apiFetch<{ deleted: boolean; id: string }>("delete_project", {
+        method: "POST",
+        body: { id },
+        token,
+      });
       clearApiCache();
       return res;
     }
-    return simulateNetwork({ message: "Project deleted in simulator" });
+    return simulateNetwork({ deleted: true, id });
   },
 };
 
+// ─────────────────────────────────────────────────────────────────
+// EXPERIENCES API
+// ─────────────────────────────────────────────────────────────────
 export const experiencesApi = {
   getAll: async (): Promise<ApiResponse<Experience[]>> => {
-    if (IS_REAL_API) {
-      return getCachedField("experiences");
-    }
+    if (IS_REAL_API) return getCachedField("experiences");
     return simulateNetwork([]);
   },
-  create: async (data: unknown, token: string) => {
+
+  create: async (data: Partial<Experience>, token: string): Promise<ApiResponse<Experience>> => {
     if (IS_REAL_API) {
-      const res = await apiFetch("create_experience", { method: "POST", body: data, token });
+      const res = await apiFetch<Experience>("create_experience", { method: "POST", body: data, token });
       clearApiCache();
       return res;
     }
-    return simulateNetwork({ message: "Experience created in simulator" });
+    return simulateNetwork(data as Experience);
   },
-  update: async (id: string, data: unknown, token: string) => {
+
+  update: async (id: string, data: Partial<Experience>, token: string): Promise<ApiResponse<Experience>> => {
     if (IS_REAL_API) {
-      const res = await apiFetch("update_experience", { method: "POST", body: { id, ...data as object }, token });
+      const res = await apiFetch<Experience>("update_experience", { method: "POST", body: { id, ...data }, token });
       clearApiCache();
       return res;
     }
-    return simulateNetwork({ message: "Experience updated in simulator" });
+    return simulateNetwork({ id, ...data } as Experience);
   },
-  delete: async (id: string, token: string) => {
+
+  delete: async (id: string, token: string): Promise<ApiResponse<{ deleted: boolean; id: string }>> => {
     if (IS_REAL_API) {
-      const res = await apiFetch("delete_experience", { method: "POST", body: { id }, token });
+      const res = await apiFetch<{ deleted: boolean; id: string }>("delete_experience", {
+        method: "POST",
+        body: { id },
+        token,
+      });
       clearApiCache();
       return res;
     }
-    return simulateNetwork({ message: "Experience deleted in simulator" });
-  }
+    return simulateNetwork({ deleted: true, id });
+  },
 };
 
+// ─────────────────────────────────────────────────────────────────
+// CERTIFICATES API
+// ─────────────────────────────────────────────────────────────────
 export const certificatesApi = {
   getAll: async (): Promise<ApiResponse<Certificate[]>> => {
-    if (IS_REAL_API) {
-      return getCachedField("certificates");
-    }
+    if (IS_REAL_API) return getCachedField("certificates");
     return simulateNetwork([]);
   },
-  create: async (data: unknown, token: string) => {
+
+  create: async (data: Partial<Certificate>, token: string): Promise<ApiResponse<Certificate>> => {
     if (IS_REAL_API) {
-      const res = await apiFetch("create_certificate", { method: "POST", body: data, token });
+      const res = await apiFetch<Certificate>("create_certificate", { method: "POST", body: data, token });
       clearApiCache();
       return res;
     }
-    return simulateNetwork({ message: "Certificate created in simulator" });
+    return simulateNetwork(data as Certificate);
   },
-  update: async (id: string, data: unknown, token: string) => {
+
+  update: async (id: string, data: Partial<Certificate>, token: string): Promise<ApiResponse<Certificate>> => {
     if (IS_REAL_API) {
-      const res = await apiFetch("update_certificate", { method: "POST", body: { id, ...data as object }, token });
+      const res = await apiFetch<Certificate>("update_certificate", { method: "POST", body: { id, ...data }, token });
       clearApiCache();
       return res;
     }
-    return simulateNetwork({ message: "Certificate updated in simulator" });
+    return simulateNetwork({ id, ...data } as Certificate);
   },
-  delete: async (id: string, token: string) => {
+
+  delete: async (id: string, token: string): Promise<ApiResponse<{ deleted: boolean; id: string }>> => {
     if (IS_REAL_API) {
-      const res = await apiFetch("delete_certificate", { method: "POST", body: { id }, token });
+      const res = await apiFetch<{ deleted: boolean; id: string }>("delete_certificate", {
+        method: "POST",
+        body: { id },
+        token,
+      });
       clearApiCache();
       return res;
     }
-    return simulateNetwork({ message: "Certificate deleted in simulator" });
-  }
+    return simulateNetwork({ deleted: true, id });
+  },
 };
 
+// ─────────────────────────────────────────────────────────────────
+// TESTIMONIALS API
+// ─────────────────────────────────────────────────────────────────
 export const testimonialsApi = {
   getAll: async (): Promise<ApiResponse<Testimonial[]>> => {
-    if (IS_REAL_API) {
-      return getCachedField("testimonials");
-    }
+    if (IS_REAL_API) return getCachedField("testimonials");
     return simulateNetwork([]);
   },
-  create: async (data: unknown, token: string) => {
+
+  create: async (data: Partial<Testimonial>, token: string): Promise<ApiResponse<Testimonial>> => {
     if (IS_REAL_API) {
-      const res = await apiFetch("create_testimonial", { method: "POST", body: data, token });
+      const res = await apiFetch<Testimonial>("create_testimonial", { method: "POST", body: data, token });
       clearApiCache();
       return res;
     }
-    return simulateNetwork({ message: "Testimonial created in simulator" });
+    return simulateNetwork(data as Testimonial);
   },
-  update: async (id: string, data: unknown, token: string) => {
+
+  update: async (id: string, data: Partial<Testimonial>, token: string): Promise<ApiResponse<Testimonial>> => {
     if (IS_REAL_API) {
-      const res = await apiFetch("update_testimonial", { method: "POST", body: { id, ...data as object }, token });
+      const res = await apiFetch<Testimonial>("update_testimonial", { method: "POST", body: { id, ...data }, token });
       clearApiCache();
       return res;
     }
-    return simulateNetwork({ message: "Testimonial updated in simulator" });
+    return simulateNetwork({ id, ...data } as Testimonial);
   },
-  delete: async (id: string, token: string) => {
+
+  delete: async (id: string, token: string): Promise<ApiResponse<{ deleted: boolean; id: string }>> => {
     if (IS_REAL_API) {
-      const res = await apiFetch("delete_testimonial", { method: "POST", body: { id }, token });
+      const res = await apiFetch<{ deleted: boolean; id: string }>("delete_testimonial", {
+        method: "POST",
+        body: { id },
+        token,
+      });
       clearApiCache();
       return res;
     }
-    return simulateNetwork({ message: "Testimonial deleted in simulator" });
-  }
+    return simulateNetwork({ deleted: true, id });
+  },
 };
 
+// ─────────────────────────────────────────────────────────────────
+// BLOGS API
+// ─────────────────────────────────────────────────────────────────
 export const blogsApi = {
   getAll: async (): Promise<ApiResponse<Blog[]>> => {
-    if (IS_REAL_API) {
-      return getCachedField("blogs");
-    }
+    if (IS_REAL_API) return getCachedField("blogs");
     return simulateNetwork([]);
   },
 
   getBySlug: async (slug: string): Promise<ApiResponse<Blog>> => {
     if (IS_REAL_API) {
-      const res = await getCachedField("blogs");
-      if (res.success && res.data) {
-        const blog = res.data.find((b) => b.slug === slug);
-        if (blog) {
-          return { success: true, data: blog };
-        }
-      }
-      throw new Error(`Blog with slug '${slug}' not found.`);
+      // get_blog_by_slug juga increment views — kirim via GET
+      const res = await apiFetch<Blog>(`get_blog_by_slug&slug=${encodeURIComponent(slug)}`);
+      return res;
     }
-    throw new Error("Blog not found (API disabled)");
+    throw new Error("Blog tidak ditemukan (API simulator).");
   },
 
-  create: async (data: unknown, token: string) => {
+  create: async (data: Partial<Blog>, token: string): Promise<ApiResponse<Blog>> => {
     if (IS_REAL_API) {
-      const res = await apiFetch("create_blog", { method: "POST", body: data, token });
+      const res = await apiFetch<Blog>("create_blog", { method: "POST", body: data, token });
       clearApiCache();
       return res;
     }
-    return simulateNetwork({ message: "Blog created in simulator" });
+    return simulateNetwork(data as Blog);
   },
 
-  update: async (id: string, data: unknown, token: string) => {
+  update: async (id: string, data: Partial<Blog>, token: string): Promise<ApiResponse<Blog>> => {
     if (IS_REAL_API) {
-      const res = await apiFetch("update_blog", { method: "POST", body: { id, ...data as object }, token });
+      const res = await apiFetch<Blog>("update_blog", { method: "POST", body: { id, ...data }, token });
       clearApiCache();
       return res;
     }
-    return simulateNetwork({ message: "Blog updated in simulator" });
+    return simulateNetwork({ id, ...data } as Blog);
   },
 
-  delete: async (id: string, token: string) => {
+  delete: async (id: string, token: string): Promise<ApiResponse<{ deleted: boolean; id: string }>> => {
     if (IS_REAL_API) {
-      const res = await apiFetch("delete_blog", { method: "POST", body: { id }, token });
+      const res = await apiFetch<{ deleted: boolean; id: string }>("delete_blog", {
+        method: "POST",
+        body: { id },
+        token,
+      });
       clearApiCache();
       return res;
     }
-    return simulateNetwork({ message: "Blog deleted in simulator" });
-  }
+    return simulateNetwork({ deleted: true, id });
+  },
 };
 
+// ─────────────────────────────────────────────────────────────────
+// CONTACT API
+// ─────────────────────────────────────────────────────────────────
 export const contactApi = {
   sendMessage: async (data: {
     senderName: string;
     senderEmail: string;
     subject: string;
     message: string;
-  }) => {
+  }): Promise<ApiResponse<{ id: string }>> => {
     if (IS_REAL_API) {
-      return apiFetch("send_message", { method: "POST", body: data });
+      return apiFetch<{ id: string }>("send_message", { method: "POST", body: data });
     }
-    return simulateNetwork({ message: "Pesan terkirim di simulator" });
+    return simulateNetwork({ id: `msg_${Date.now()}` });
   },
 
   getMessages: async (token: string): Promise<ApiResponse<ContactMessage[]>> => {
     if (IS_REAL_API) {
-      return apiFetch<ContactMessage[]>("get_messages", { method: "POST", token });
+      return apiFetch<ContactMessage[]>("get_messages", { method: "POST", body: {}, token });
     }
     return simulateNetwork([]);
   },
 
-  markRead: async (id: string, token: string) => {
+  markRead: async (id: string, token: string): Promise<ApiResponse<ContactMessage>> => {
     if (IS_REAL_API) {
-      return apiFetch("mark_message_read", { method: "POST", body: { id }, token });
+      return apiFetch<ContactMessage>("mark_message_read", { method: "POST", body: { id }, token });
     }
-    return simulateNetwork({ message: "Message marked as read" });
-  }
+    return simulateNetwork({ id, isRead: true } as ContactMessage);
+  },
 };
 
+// ─────────────────────────────────────────────────────────────────
+// MEDIA API
+// ─────────────────────────────────────────────────────────────────
 export const mediaApi = {
   upload: async (
-    data: { filename: string; mimeType: string; base64Content: string; subfolder?: string },
+    data: {
+      filename: string;
+      mimeType: string;
+      base64Content: string;
+      subfolder?: string;
+    },
     token: string
-  ) => {
+  ): Promise<ApiResponse<{ url: string; fileId: string }>> => {
     if (IS_REAL_API) {
       return apiFetch<{ url: string; fileId: string }>("upload_file", {
         method: "POST",
@@ -446,6 +556,9 @@ export const mediaApi = {
         token,
       });
     }
-    return simulateNetwork({ url: "https://lh3.googleusercontent.com/d/dummy-uploaded-file-id", fileId: "dummy-uploaded-file-id" });
+    return simulateNetwork({
+      url: "https://lh3.googleusercontent.com/d/dummy-file-id",
+      fileId: "dummy-file-id",
+    });
   },
 };

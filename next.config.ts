@@ -32,17 +32,14 @@ const nextConfig: NextConfig = {
 
   images: {
     // Required for static export — use Next Image without built-in optimizer.
-    // Cloudinary is the primary image CDN for all new uploads.
-    // lh3.googleusercontent.com retained for backward compatibility with existing data.
+    // Google Drive public share links are allowed as remote patterns.
     unoptimized: true,
     remotePatterns: [
       {
-        // Primary CDN: Cloudinary — stable, fast, transformable
         protocol: "https",
-        hostname: "res.cloudinary.com",
+        hostname: "drive.google.com",
       },
       {
-        // Backward compat: existing Google Drive images already in spreadsheet
         protocol: "https",
         hostname: "lh3.googleusercontent.com",
       },

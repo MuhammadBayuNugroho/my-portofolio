@@ -150,8 +150,12 @@ export interface Skill extends BaseEntity {
 export type ExperienceType =
   | "Professional"
   | "Organizational"
-  | "Volunteer"
-  | "Freelance";
+  | "Freelance"
+  | "Education"
+  | "Career"
+  | "Leadership"
+  | "Achievement"
+  | "Volunteer";
 
 export interface Experience extends BaseEntity {
   title: string;           // Job/role title
