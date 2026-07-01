@@ -220,8 +220,11 @@ function b64Decode(str) {
   return Utilities.newBlob(Utilities.base64DecodeWebSafe(str)).getDataAsString();
 }
 function hmacSha256(input, secret) {
-  var key = Utilities.newBlob(secret).getBytes();
-  var sig = Utilities.computeHmacSignature(Utilities.MacAlgorithm.HMAC_SHA_256, input, key);
+  // GAS requires BOTH value & key to be the same type.
+  // When key is Byte[] (number[]), value must also be Byte[] — not String.
+  var inputBytes = Utilities.newBlob(input).getBytes();
+  var keyBytes   = Utilities.newBlob(secret).getBytes();
+  var sig = Utilities.computeHmacSignature(Utilities.MacAlgorithm.HMAC_SHA_256, inputBytes, keyBytes);
   return Utilities.base64EncodeWebSafe(sig).replace(/=+$/, '');
 }
 
