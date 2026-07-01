@@ -130,11 +130,16 @@ export default function AdminDashboardPage() {
             <h2 className="font-display text-h3 text-foreground font-semibold">Aksi Cepat</h2>
           </div>
 
-          <Card className="p-6 flex flex-col gap-4" hoverEffect={false}>
+          <Card className="p-6 flex flex-col gap-2" hoverEffect={false}>
             {[
-              { label: "Buat Project Baru", href: "/admin/projects" },
-              { label: "Tulis Artikel Baru", href: "/admin/blog" },
-              { label: "Unggah Media Baru", href: "/admin/gallery" },
+              { label: "➕ Buat Project Baru",       href: "/admin/projects" },
+              { label: "✍️ Tulis Artikel Blog",      href: "/admin/blog" },
+              { label: "🖼️ Kelola Galeri",           href: "/admin/gallery" },
+              { label: "🔧 Tambah Skill",            href: "/admin/skills" },
+              { label: "🏆 Tambah Sertifikat",       href: "/admin/certificates" },
+              { label: "💬 Lihat Testimoni",         href: "/admin/testimonials" },
+              { label: "📬 Pesan Kontak",            href: "/admin/contact" },
+              { label: "💼 Kelola Experience",       href: "/admin/experience" },
             ].map((shortcut, idx) => (
               <a
                 key={idx}

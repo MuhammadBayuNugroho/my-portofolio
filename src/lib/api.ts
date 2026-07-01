@@ -534,6 +534,17 @@ export const contactApi = {
     }
     return simulateNetwork({ id, isRead: true } as ContactMessage);
   },
+
+  deleteMessage: async (id: string, token: string): Promise<ApiResponse<{ deleted: boolean; id: string }>> => {
+    if (IS_REAL_API) {
+      return apiFetch<{ deleted: boolean; id: string }>("delete_message", {
+        method: "POST",
+        body: { id },
+        token,
+      });
+    }
+    return simulateNetwork({ deleted: true, id });
+  },
 };
 
 // ─────────────────────────────────────────────────────────────────

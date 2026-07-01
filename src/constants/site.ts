@@ -10,11 +10,11 @@ export const SITE_CONFIG = {
   shortBio:
     "I build beautiful digital experiences at the intersection of clean code, thoughtful design, and purposeful leadership.",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://muhbayunugroho.github.io",
-  email: "bayunugroho@example.com",
+  email: "bayu27.mbn@gmail.com",
   location: "Indonesia",
-  github: "https://github.com/muhbayunugroho",
+  github: "https://github.com/muhammadbayunugroho",
   linkedin: "https://linkedin.com/in/muhbayunugroho",
-  instagram: "https://instagram.com/muhbayunugroho",
+  instagram: "https://instagram.com/mass_bayuuu",
   twitter: "https://twitter.com/muhbayunugroho",
   resumeUrl: "#",
 

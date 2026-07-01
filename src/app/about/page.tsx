@@ -48,11 +48,11 @@ export default function AboutPage() {
               {/* Profile Photo Card */}
               <motion.div variants={fadeUpVariants} className="lg:col-span-5 relative aspect-square max-w-sm mx-auto lg:max-w-none w-full rounded-2xl overflow-hidden border border-border bg-background-elevated shadow-card">
                 <Image
-                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600"
+                  src="/foto-about.jpg"
                   alt={SITE_CONFIG.name}
                   fill
                   priority
-                  className="object-cover"
+                  className="object-cover object-top"
                 />
               </motion.div>
 

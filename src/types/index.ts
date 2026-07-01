@@ -124,13 +124,11 @@ export interface Journey extends BaseEntity {
 // SKILLS MODULE
 // ─────────────────────────────────────────────────────────────────
 
-export type SkillCategory =
-  | "Frontend"
-  | "Design"
-  | "Backend"
-  | "Tools"
-  | "Soft Skills"
-  | "Language";
+/**
+ * SkillCategory — free-form string to allow admin to define custom categories.
+ * Common presets: "Frontend" | "Backend" | "Design" | "Tools" | "Soft Skills" | "Language"
+ */
+export type SkillCategory = string;
 
 export type SkillLevel = "Beginner" | "Intermediate" | "Advanced" | "Expert";
 

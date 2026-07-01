@@ -161,6 +161,7 @@ function doPost(e) {
       // Messages
       case 'get_messages':        data = handleGetMessages(); break;
       case 'mark_message_read':   data = handleMarkMessageRead(payload.id); break;
+      case 'delete_message':      data = deleteRow('Messages', payload.id); break;
       // Media
       case 'upload_file':         data = handleUploadFile(payload); break;
 
