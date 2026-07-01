@@ -5,15 +5,13 @@ import { Footer } from "@/components/public/Footer";
 import { Container } from "@/components/public/Container";
 import { Card } from "@/components/ui/Card";
 import { SITE_CONFIG } from "@/constants/site";
-import { User, Award, Shield, FileText, ArrowRight, Star } from "lucide-react";
+import { User, Award, Shield, FileText, ArrowRight, Star, Calendar, MapPin, X, GraduationCap } from "lucide-react";
 import { useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { fadeUpVariants, staggerContainerVariants } from "@/lib/animations";
-import fotoAbout from "@/assets/foto-about.jpg";
 import useSWR from "swr";
 import { experiencesApi, settingsApi } from "@/lib/api";
-import { Calendar, MapPin, X, GraduationCap } from "lucide-react";
 
 export default function AboutPage() {
   const [isEducationModalOpen, setIsEducationModalOpen] = useState(false);
@@ -70,7 +68,7 @@ export default function AboutPage() {
               {/* Profile Photo Card */}
               <motion.div variants={fadeUpVariants} className="lg:col-span-5 relative aspect-square max-w-sm mx-auto lg:max-w-none w-full rounded-2xl overflow-hidden border border-border bg-background-elevated shadow-card">
                 <Image
-                  src={fotoAbout}
+                  src="/images/foto-about.jpg"
                   alt={SITE_CONFIG.name}
                   fill
                   priority
