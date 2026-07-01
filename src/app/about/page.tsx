@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { fadeUpVariants, staggerContainerVariants } from "@/lib/animations";
 import useSWR from "swr";
 import { experiencesApi, settingsApi } from "@/lib/api";
+import fotoAbout from "../../../public/foto-about.jpg";
 
 export default function AboutPage() {
   const [isEducationModalOpen, setIsEducationModalOpen] = useState(false);
@@ -68,7 +69,7 @@ export default function AboutPage() {
               {/* Profile Photo Card */}
               <motion.div variants={fadeUpVariants} className="lg:col-span-5 relative aspect-square max-w-sm mx-auto lg:max-w-none w-full rounded-2xl overflow-hidden border border-border bg-background-elevated shadow-card">
                 <Image
-                  src="/images/foto-about.jpg"
+                  src={fotoAbout}
                   alt={SITE_CONFIG.name}
                   fill
                   priority

@@ -143,6 +143,9 @@ export default function RootLayout({
       <head>
         {/* Preconnect to Google Fonts CDN for performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
+        {/* Explicit Favicon for GitHub Pages */}
+        <link rel="icon" type="image/jpeg" href={`${SITE_URL}/favicon.jpg`} />
+        
         <link
           rel="preconnect"
           href="https://fonts.gstatic.com"
