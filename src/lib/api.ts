@@ -557,11 +557,9 @@ export const mediaApi = {
       mimeType: string;
       base64Content: string;
       subfolder?: string;
-    },
-    token: string
-  ): Promise<ApiResponse<{ url: string; fileId: string }>> => {
+  ): Promise<ApiResponse<{ url: string; fileId: string; downloadUrl?: string }>> => {
     if (IS_REAL_API) {
-      return apiFetch<{ url: string; fileId: string }>("upload_file", {
+      return apiFetch<{ url: string; fileId: string; downloadUrl?: string }>("upload_file", {
         method: "POST",
         body: data,
         token,
@@ -570,6 +568,7 @@ export const mediaApi = {
     return simulateNetwork({
       url: "https://lh3.googleusercontent.com/d/dummy-file-id",
       fileId: "dummy-file-id",
+      downloadUrl: "https://drive.google.com/uc?id=dummy-file-id&export=download",
     });
   },
 };

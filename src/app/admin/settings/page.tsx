@@ -69,11 +69,7 @@ export default function SettingsPage() {
             token
           );
 
-          if (!uploadRes.success || !uploadRes.data?.url) {
-            throw new Error(uploadRes.error || "Gagal mengunggah file");
-          }
-
-          const fileUrl = uploadRes.data.url;
+          const fileUrl = uploadRes.data.downloadUrl || uploadRes.data.url;
 
           // 3. Save to Settings table
           await settingsApi.upsert(
