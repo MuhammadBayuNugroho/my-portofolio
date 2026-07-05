@@ -49,17 +49,30 @@ export function formatRelativeDate(date: string | Date): string {
   return formatDistanceToNow(d, { addSuffix: true, locale: idLocale });
 }
 
-/**
- * getDuration — Calculate duration between two dates.
- * Returns a human-readable string like "Jan 2024 — Jun 2026 (2 tahun 5 bulan)"
- */
 export function getDuration(
-  startDate: string,
-  endDate?: string
+  startDate: string | number,
+  endDate?: string | number
 ): { display: string; isCurrent: boolean } {
-  const start = parseISO(startDate);
-  const end = endDate ? parseISO(endDate) : new Date();
+  const safeParseDate = (d: string | number): Date => {
+    if (typeof d === "number") return new Date(d, 0, 1);
+    if (typeof d === "string" && /^\d{4}$/.test(d.trim())) {
+      return new Date(parseInt(d.trim(), 10), 0, 1);
+    }
+    try {
+      const parsed = parseISO(d as string);
+      return isNaN(parsed.getTime()) ? new Date(d) : parsed;
+    } catch {
+      return new Date(d);
+    }
+  };
+
+  const start = safeParseDate(startDate);
+  const end = endDate ? safeParseDate(endDate) : new Date();
   const isCurrent = !endDate;
+
+  if (isNaN(start.getTime())) {
+    return { display: "Invalid Date", isCurrent };
+  }
 
   const months =
     (end.getFullYear() - start.getFullYear()) * 12 +

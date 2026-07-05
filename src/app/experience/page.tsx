@@ -6,42 +6,21 @@ import { Footer } from "@/components/public/Footer";
 import { Container } from "@/components/public/Container";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import type { Experience, ExperienceType } from "@/types";
+import type { ExperienceType } from "@/types";
 import { getDuration } from "@/lib/utils";
-import { Briefcase, Calendar, MapPin, CheckCircle2, Award, Landmark, Compass, Loader2, AlertTriangle } from "lucide-react";
+import { Briefcase, Calendar, MapPin, CheckCircle2, Award, Landmark, Compass, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import useSWR from "swr";
 import { experiencesApi } from "@/lib/api";
-
-/**
- * normalizeExperience — Pastikan field `highlights` selalu berupa array.
- * Data dari Google Apps Script bisa datang sebagai string (comma-separated)
- * atau null/undefined — ini yang menyebabkan crash di tab Organisasi.
- */
-function normalizeExperience(exp: Experience): Experience {
-  // Cast ke `unknown` dulu karena GAS API bisa mengembalikan highlights
-  // sebagai string meskipun tipe deklarasinya adalah string[].
-  const raw = exp.highlights as unknown;
-  const highlights: string[] = Array.isArray(raw)
-    ? (raw as string[])
-    : typeof raw === "string" && (raw as string).trim() !== ""
-      ? (raw as string).split(",").map((h) => h.trim()).filter(Boolean)
-      : [];
-  return { ...exp, highlights };
-}
 
 type PageTab = "work" | "organization" | "achievement";
 
 export default function ExperiencePage() {
   const [activeTab, setActiveTab] = useState<PageTab>("work");
   
-  const { data: experiences = [], isLoading, error: swrError } = useSWR(
-    "experiences",
-    () => experiencesApi.getAll().then((res) =>
-      (res.data || []).map(normalizeExperience)
-    )
+  const { data: experiences = [], isLoading } = useSWR("experiences", () =>
+    experiencesApi.getAll().then((res) => res.data || [])
   );
-  const isError = Boolean(swrError);
 
   // Tab 1: Kerja filters
   const [activeWorkType, setActiveWorkType] = useState<ExperienceType | "All">("All");
@@ -58,8 +37,8 @@ export default function ExperiencePage() {
   // Filtering Logic
   const filteredData = experiences.filter((exp) => {
     if (activeTab === "work") {
-      if (!["Professional", "Freelance", "Career"].includes(exp.type)) return false;
-      return activeWorkType === "All" || exp.type === activeWorkType;
+      if (!["Professional", "Proffesional", "Freelance", "Career"].includes(exp.type)) return false;
+      return activeWorkType === "All" || exp.type === activeWorkType || (exp.type === "Proffesional" && activeWorkType === "Professional");
     }
     if (activeTab === "organization") {
       if (!["Organizational", "Volunteer"].includes(exp.type)) return false;
@@ -171,12 +150,6 @@ export default function ExperiencePage() {
                 <div className="flex justify-center py-20">
                   <Loader2 className="animate-spin text-accent" size={32} />
                 </div>
-              ) : isError ? (
-                <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
-                  <AlertTriangle size={32} className="text-warning" />
-                  <p className="text-body-lg text-foreground-muted">Gagal memuat data dari server.</p>
-                  <p className="text-xs text-foreground-subtle">Periksa koneksi internet atau coba muat ulang halaman.</p>
-                </div>
               ) : filteredData.length > 0 ? (
                 <div className="relative max-w-3xl mx-auto pl-6 border-l-2 border-border/80 flex flex-col gap-10">
                   {filteredData.map((exp, idx) => {
@@ -200,7 +173,7 @@ export default function ExperiencePage() {
                           <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-4">
                             <div>
                               <span className="text-[10px] text-accent uppercase font-bold tracking-wider mb-1 block">
-                                {exp.type}
+                                {exp.type === "Proffesional" ? "Professional" : exp.type}
                               </span>
                               <h3 className="font-display text-h3 text-foreground font-semibold">
                                 {exp.title}
@@ -235,7 +208,7 @@ export default function ExperiencePage() {
                           </p>
 
                           {/* Highlights Bullet List */}
-                          {(exp.highlights ?? []).length > 0 && (
+                          {exp.highlights?.length > 0 && (
                             <div className="border-t border-border/40 pt-4 mt-2">
                               <span className="text-[10px] font-bold text-foreground uppercase tracking-wider block mb-2">
                                 Pencapaian Utama
@@ -287,12 +260,6 @@ export default function ExperiencePage() {
               {isLoading ? (
                 <div className="flex justify-center py-20">
                   <Loader2 className="animate-spin text-accent" size={32} />
-                </div>
-              ) : isError ? (
-                <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
-                  <AlertTriangle size={32} className="text-warning" />
-                  <p className="text-body-lg text-foreground-muted">Gagal memuat data dari server.</p>
-                  <p className="text-xs text-foreground-subtle">Periksa koneksi internet atau coba muat ulang halaman.</p>
                 </div>
               ) : filteredData.length > 0 ? (
                 <div className="relative max-w-3xl mx-auto pl-6 border-l-2 border-border/80 flex flex-col gap-10">
