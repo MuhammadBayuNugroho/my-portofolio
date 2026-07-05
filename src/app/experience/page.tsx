@@ -19,14 +19,15 @@ import { experiencesApi } from "@/lib/api";
  * atau null/undefined — ini yang menyebabkan crash di tab Organisasi.
  */
 function normalizeExperience(exp: Experience): Experience {
-  return {
-    ...exp,
-    highlights: Array.isArray(exp.highlights)
-      ? exp.highlights
-      : typeof exp.highlights === "string" && exp.highlights.trim() !== ""
-        ? exp.highlights.split(",").map((h: string) => h.trim()).filter(Boolean)
-        : [],
-  };
+  // Cast ke `unknown` dulu karena GAS API bisa mengembalikan highlights
+  // sebagai string meskipun tipe deklarasinya adalah string[].
+  const raw = exp.highlights as unknown;
+  const highlights: string[] = Array.isArray(raw)
+    ? (raw as string[])
+    : typeof raw === "string" && (raw as string).trim() !== ""
+      ? (raw as string).split(",").map((h) => h.trim()).filter(Boolean)
+      : [];
+  return { ...exp, highlights };
 }
 
 type PageTab = "work" | "organization" | "achievement";
