@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import { Navbar } from "@/components/public/Navbar";
 import { Footer } from "@/components/public/Footer";
@@ -24,14 +24,10 @@ export default function CertificatesPage() {
 
   const [selectedCert, setSelectedCert] = useState<Certificate | null>(null);
 
-  const categories: (CertificateCategory | "All")[] = [
-    "All",
-    "Frontend",
-    "Design",
-    "Leadership",
-    "Backend",
-    "Cloud",
-  ];
+  const categories = React.useMemo(() => {
+    const cats = [...new Set(certificates.map((c) => c.category))].filter(Boolean) as string[];
+    return ["All", ...cats];
+  }, [certificates]);
 
   // Filtering Logic
   const filteredCertificates = certificates.filter((cert) => {

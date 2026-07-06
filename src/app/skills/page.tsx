@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { Navbar } from "@/components/public/Navbar";
 import { Footer } from "@/components/public/Footer";
 import { Container } from "@/components/public/Container";
@@ -11,24 +11,20 @@ import { motion } from "framer-motion";
 import useSWR from "swr";
 import { skillsApi } from "@/lib/api";
 
-type SkillCategoryFilter = "All" | "Frontend" | "Design" | "Backend" | "Tools" | "Soft Skills";
+
 
 export default function SkillsPage() {
   const [search, setSearch] = useState("");
-  const [activeFilter, setActiveFilter] = useState<SkillCategoryFilter>("All");
+  const [activeFilter, setActiveFilter] = useState<string>("All");
 
   const { data: skills = [], isLoading } = useSWR("skills", () =>
     skillsApi.getAll().then((res) => res.data || [])
   );
 
-  const categories: SkillCategoryFilter[] = [
-    "All",
-    "Frontend",
-    "Design",
-    "Backend",
-    "Tools",
-    "Soft Skills",
-  ];
+  const categories = React.useMemo(() => {
+    const cats = [...new Set(skills.map((s) => s.category))].filter(Boolean) as string[];
+    return ["All", ...cats];
+  }, [skills]);
 
   const filteredSkills = skills.filter((skill) => {
     const matchesSearch = skill.name.toLowerCase().includes(search.toLowerCase());

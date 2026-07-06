@@ -49,7 +49,6 @@ export interface AdminNavItem extends NavItem {
 export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { label: "Dashboard",    href: "/admin/dashboard",    icon: LayoutDashboard },
   { label: "Projects",     href: "/admin/projects",     icon: FolderOpen },
-  { label: "Gallery",      href: "/admin/gallery",      icon: Image },
   { label: "Skills",       href: "/admin/skills",       icon: Code2 },
   { label: "Experience",   href: "/admin/experience",   icon: Briefcase,    description: "Pengalaman kerja & perjalanan karir" },
   { label: "Certificates", href: "/admin/certificates", icon: Award },

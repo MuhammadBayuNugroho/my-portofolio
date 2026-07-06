@@ -9,14 +9,6 @@ import { Button } from "@/components/ui/Button";
 import { Plus, Edit2, Trash2, Loader2, Briefcase, MapPin, Calendar, Star } from "lucide-react";
 import { cn, formatDateShort } from "@/lib/utils";
 
-// ─── Jenis tipe berdasarkan tab ─────────────────────────────────
-const WORK_TYPES: ExperienceType[] = ["Professional", "Proffesional", "Freelance", "Career"];
-const ORG_TYPES: ExperienceType[] = ["Organizational", "Volunteer"];
-const ACH_TYPES: ExperienceType[] = ["Achievement", "Leadership"];
-const EDU_TYPES: ExperienceType[] = ["Education", "Pendidikan"];
-
-type TabKey = "work" | "organization" | "achievement" | "education";
-
 // ─── Flexible Category Tag Input ────────────────────────────────
 function CategoryInput({
   value,
@@ -77,8 +69,7 @@ export default function AdminExperiencePage() {
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<TabKey>("work");
-
+  
   // Form State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingExp, setEditingExp] = useState<Experience | null>(null);
@@ -90,7 +81,7 @@ export default function AdminExperiencePage() {
   const [isCurrent, setIsCurrent] = useState(false);
   const [description, setDescription] = useState("");
   const [highlightsInput, setHighlightsInput] = useState("");
-  const [type, setType] = useState<ExperienceType>("Professional");
+  const [type, setType] = useState<string>("Professional");
   const [logoUrl, setLogoUrl] = useState("");
   const [link, setLink] = useState("");
   const [order, setOrder] = useState<number>(0);
@@ -98,9 +89,15 @@ export default function AdminExperiencePage() {
 
   // Collect all existing types for autocomplete
   const existingTypes = useMemo(() => {
-    const all = [...new Set(experiences.map((e) => e.type))];
+    const all = [...new Set(experiences.map((e) => e.type))].filter(Boolean) as string[];
     return all;
   }, [experiences]);
+
+  const [activeCategory, setActiveCategory] = useState<string>("All");
+
+  const categoriesTabs = useMemo(() => {
+    return ["All", ...existingTypes];
+  }, [existingTypes]);
 
   const fetchExperiences = async () => {
     setIsLoading(true);
@@ -120,27 +117,23 @@ export default function AdminExperiencePage() {
 
   // Data filtered by tab
   const displayed = useMemo(() => {
-    return experiences.filter((e) => {
-      const typeStr = (e.type || "").toString().trim().toLowerCase();
-      if (activeTab === "work") return ["professional", "proffesional", "freelance", "career"].includes(typeStr);
-      if (activeTab === "organization") return ["organizational", "volunteer"].includes(typeStr);
-      if (activeTab === "achievement") return ["achievement", "leadership"].includes(typeStr);
-      if (activeTab === "education") return ["education", "pendidikan"].includes(typeStr);
-      return false;
+    let list = [...experiences];
+    if (activeCategory !== "All") {
+      list = list.filter((e) => e.type === activeCategory);
+    }
+    // sort by order, then start date desc
+    return list.sort((a, b) => {
+      if ((a.order || 0) !== (b.order || 0)) return (a.order || 0) - (b.order || 0);
+      return new Date(b.startDate || 0).getTime() - new Date(a.startDate || 0).getTime();
     });
-  }, [experiences, activeTab]);
-
-  const defaultType: ExperienceType = 
-    activeTab === "work" ? "Professional" :
-    activeTab === "organization" ? "Organizational" :
-    activeTab === "achievement" ? "Achievement" : "Education";
+  }, [experiences, activeCategory]);
 
   const handleOpenCreate = () => {
     setEditingExp(null);
     setTitle(""); setOrganization(""); setLocation("");
     setStartDate(""); setEndDate(""); setIsCurrent(false);
     setDescription(""); setHighlightsInput("");
-    setType(defaultType);
+    setType("Professional");
     setLogoUrl(""); setLink("");
     setOrder(0);
     setIsModalOpen(true);
@@ -156,7 +149,7 @@ export default function AdminExperiencePage() {
     setIsCurrent(!!exp.isCurrent);
     setDescription(exp.description);
     setHighlightsInput(exp.highlights ? exp.highlights.join(", ") : "");
-    setType(exp.type as ExperienceType);
+    setType(exp.type as string);
     setLogoUrl(exp.logoUrl || "");
     setLink(exp.link || "");
     setOrder(exp.order || 0);
@@ -194,18 +187,6 @@ export default function AdminExperiencePage() {
     }
   };
 
-  const tabs = [
-    { key: "work" as TabKey, label: "💼 Pekerjaan", desc: "Professional, Freelance" },
-    { key: "organization" as TabKey, label: "👥 Organisasi", desc: "Organizational, Volunteer" },
-    { key: "achievement" as TabKey, label: "🏆 Prestasi", desc: "Achievement, Leadership" },
-    { key: "education" as TabKey, label: "🎓 Pendidikan", desc: "Education, Kursus" },
-  ];
-
-  const typeOptions: ExperienceType[] = 
-    activeTab === "work" ? WORK_TYPES :
-    activeTab === "organization" ? ORG_TYPES :
-    activeTab === "achievement" ? ACH_TYPES : EDU_TYPES;
-
   return (
     <div className="flex flex-col gap-8">
       {/* Header */}
@@ -222,19 +203,19 @@ export default function AdminExperiencePage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 p-1 rounded-lg bg-background-overlay w-fit">
-        {tabs.map((tab) => (
+      <div className="flex flex-wrap gap-1 p-1 rounded-lg bg-background-overlay w-fit">
+        {categoriesTabs.map((cat) => (
           <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
+            key={cat}
+            onClick={() => setActiveCategory(cat)}
             className={cn(
               "px-5 py-2 rounded-md text-xs font-semibold transition-colors",
-              activeTab === tab.key
+              activeCategory === cat
                 ? "bg-background text-foreground shadow-sm"
                 : "text-foreground-muted hover:text-foreground"
             )}
           >
-            {tab.label}
+            {cat}
           </button>
         ))}
       </div>
@@ -248,142 +229,118 @@ export default function AdminExperiencePage() {
         <div className="p-4 text-center text-error bg-error/10 border border-error/20 rounded-md">{error}</div>
       ) : displayed.length === 0 ? (
         <Card className="p-12 text-center" hoverEffect={false}>
-          <p className="text-xs text-foreground-muted mb-4">Belum ada data untuk kategori ini.</p>
-          <Button onClick={handleOpenCreate} variant="primary" className="gap-2">
-            <Plus size={14} /> Tambah Pertama
-          </Button>
+          <Briefcase className="mx-auto text-border mb-4" size={48} />
+          <p className="text-foreground font-semibold">Belum ada pengalaman.</p>
+          <p className="text-xs text-foreground-muted">Tambahkan pengalaman pertama Anda.</p>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="flex flex-col gap-4">
           {displayed.map((exp) => (
-            <Card key={exp.id} className="p-5 flex flex-col gap-3" hoverEffect={false}>
-              <div className="flex justify-between items-start">
-                <span className="text-[10px] text-accent uppercase font-bold tracking-wider bg-accent/10 px-2 py-0.5 rounded">
-                  {exp.type.toString().trim().toLowerCase() === "proffesional" ? "Professional" : exp.type}
-                </span>
-                <div className="flex gap-1">
-                  <button onClick={() => handleOpenEdit(exp)} className="text-foreground-subtle hover:text-foreground p-1.5 rounded transition-colors hover:bg-background-overlay">
-                    <Edit2 size={13} />
-                  </button>
-                  <button onClick={() => handleDelete(exp.id)} className="text-error/70 hover:text-error p-1.5 rounded transition-colors hover:bg-error/10">
-                    <Trash2 size={13} />
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <h4 className="font-display text-body font-bold text-foreground leading-snug">{exp.title}</h4>
-                <div className="flex items-center gap-3 mt-1.5 text-[10px] text-foreground-subtle">
-                  <span className="flex items-center gap-1"><Briefcase size={10} />{exp.organization}</span>
-                  {exp.location && <span className="flex items-center gap-1"><MapPin size={10} />{exp.location}</span>}
-                </div>
-                <div className="flex items-center gap-1 mt-1 text-[10px] text-foreground-subtle">
-                  <Calendar size={10} />
-                  <span>{formatDateShort(exp.startDate as string)} — {exp.isCurrent ? "Sekarang" : (exp.endDate ? formatDateShort(exp.endDate as string) : "-")}</span>
-                </div>
-              </div>
-
-              <p className="text-xs text-foreground-muted leading-relaxed line-clamp-2">{exp.description}</p>
-
-              {exp.highlights && exp.highlights.length > 0 && (
-                <div className="flex flex-wrap gap-1 pt-1 border-t border-border/40">
-                  {exp.highlights.slice(0, 3).map((h, i) => (
-                    <span key={i} className="flex items-center gap-1 text-[9px] text-foreground-muted bg-background-overlay px-2 py-0.5 rounded-full">
-                      <Star size={8} className="text-warning" />{h}
+            <Card key={exp.id} className="p-5 flex flex-col md:flex-row justify-between gap-4" hoverEffect={false}>
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-[10px] bg-accent/10 text-accent px-2 py-0.5 rounded font-bold uppercase tracking-wider">
+                    {exp.type}
+                  </span>
+                  {exp.isCurrent && (
+                    <span className="text-[10px] bg-success/10 text-success px-2 py-0.5 rounded font-bold uppercase tracking-wider flex items-center gap-1">
+                      <Star size={10} /> Aktif
                     </span>
-                  ))}
+                  )}
+                  {exp.order !== undefined && exp.order > 0 && (
+                    <span className="text-[10px] bg-foreground/10 text-foreground px-2 py-0.5 rounded font-bold">
+                      Order: {exp.order}
+                    </span>
+                  )}
                 </div>
-              )}
+                <h3 className="font-semibold text-foreground text-base">{exp.title}</h3>
+                <p className="text-foreground-muted text-sm">{exp.organization}</p>
+                
+                <div className="flex items-center gap-4 mt-3 text-xs text-foreground-subtle">
+                  <span className="flex items-center gap-1"><Calendar size={12}/> {formatDateShort(exp.startDate)} - {exp.isCurrent ? "Sekarang" : formatDateShort(exp.endDate)}</span>
+                  {exp.location && <span className="flex items-center gap-1"><MapPin size={12}/> {exp.location}</span>}
+                </div>
+              </div>
+
+              <div className="flex items-start gap-2">
+                <Button onClick={() => handleOpenEdit(exp)} variant="outline" className="px-3 py-1.5 h-auto text-xs flex items-center gap-1">
+                  <Edit2 size={12} /> Edit
+                </Button>
+                <Button onClick={() => handleDelete(exp.id)} variant="outline" className="px-3 py-1.5 h-auto text-xs flex items-center gap-1 text-error hover:text-error-foreground hover:bg-error border-error/20 hover:border-error">
+                  <Trash2 size={12} /> Hapus
+                </Button>
+              </div>
             </Card>
           ))}
         </div>
       )}
 
-      {/* Modal */}
+      {/* Edit/Create Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <Card className="max-w-lg w-full p-6" hoverEffect={false}>
-            <h2 className="font-display text-h3 font-bold text-foreground mb-5">
-              {editingExp ? "Edit Data" : "Tambah Baru"}
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <Card className="max-w-2xl w-full p-6 my-8" hoverEffect={false}>
+            <h2 className="font-display text-h3 font-bold text-foreground mb-4">
+              {editingExp ? "Edit Pengalaman" : "Tambah Pengalaman"}
             </h2>
-            <form onSubmit={handleSave} className="flex flex-col gap-4 max-h-[75vh] overflow-y-auto pr-1">
-
-              {/* Tipe */}
-              <CategoryInput
-                label="Tipe / Kategori"
-                value={type}
-                onChange={(v) => setType(v as ExperienceType)}
-                suggestions={[...typeOptions, ...existingTypes].filter((v, i, a) => a.indexOf(v) === i)}
-              />
+            <form onSubmit={handleSave} className="flex flex-col gap-4 max-h-[80vh] overflow-y-auto pr-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-foreground-muted">Jabatan / Posisi / Penghargaan</label>
+                  <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" required />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-foreground-muted">Nama Organisasi / Perusahaan</label>
+                  <input type="text" value={organization} onChange={(e) => setOrganization(e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" required />
+                </div>
+              </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Nama Jabatan / Role</label>
-                  <input type="text" value={title} onChange={(e) => setTitle(e.target.value)}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" required />
+                  <label className="text-xs font-semibold text-foreground-muted">Lokasi (Opsional)</label>
+                  <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" placeholder="Jakarta, Indonesia" />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Organisasi / Perusahaan</label>
-                  <input type="text" value={organization} onChange={(e) => setOrganization(e.target.value)}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" required />
+                  <label className="text-xs font-semibold text-foreground-muted">Kategori / Tipe (Ketik untuk buat baru)</label>
+                  <CategoryInput value={type} onChange={setType} suggestions={existingTypes} label="" />
                 </div>
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-foreground-muted">Lokasi</label>
-                <input type="text" value={location} onChange={(e) => setLocation(e.target.value)}
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" placeholder="Jakarta, Remote, dll." />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 items-end">
+              <div className="grid grid-cols-3 gap-4 items-end">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-semibold text-foreground-muted">Tanggal Mulai</label>
-                  <input type="text" value={startDate} onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" placeholder="YYYY-MM-DD" required />
+                  <input type="text" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" placeholder="Misal: 2021-01 atau Jan 2021" />
                 </div>
-                <div className="flex flex-col gap-2">
-                  <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-foreground">
-                    <input type="checkbox" checked={isCurrent} onChange={(e) => setIsCurrent(e.target.checked)} className="rounded" />
-                    Saat Ini Aktif
-                  </label>
-                  {!isCurrent && (
-                    <input type="text" value={endDate} onChange={(e) => setEndDate(e.target.value)}
-                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" placeholder="YYYY-MM-DD" />
-                  )}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-foreground-muted">Tanggal Selesai</label>
+                  <input type="text" value={endDate} onChange={(e) => setEndDate(e.target.value)} disabled={isCurrent} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs disabled:opacity-50" placeholder="Biarkan kosong jika masih aktif" />
+                </div>
+                <div className="flex items-center gap-2 pb-2">
+                  <input type="checkbox" id="isCurrent" checked={isCurrent} onChange={(e) => setIsCurrent(e.target.checked)} className="rounded" />
+                  <label htmlFor="isCurrent" className="text-xs font-semibold text-foreground cursor-pointer">Masih Aktif</label>
                 </div>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-foreground-muted">Deskripsi</label>
-                <textarea value={description} onChange={(e) => setDescription(e.target.value)}
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs h-20 resize-none" required />
+                <label className="text-xs font-semibold text-foreground-muted">Deskripsi Tugas (Opsional)</label>
+                <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs h-20" />
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-foreground-muted">Poin Highlight (pisahkan koma)</label>
-                <input type="text" value={highlightsInput} onChange={(e) => setHighlightsInput(e.target.value)}
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs"
-                  placeholder="Meningkatkan performa 40%, Memimpin 4 developer, dll." />
+                <label className="text-xs font-semibold text-foreground-muted">Highlight Pencapaian (Pisahkan dengan koma)</label>
+                <textarea value={highlightsInput} onChange={(e) => setHighlightsInput(e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs h-16" placeholder="Meningkatkan konversi 20%, Memimpin tim 5 orang..." />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Logo URL</label>
-                  <input type="text" value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" placeholder="https://..." />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Tautan/Link Terkait (Opsional)</label>
-                  <input type="url" value={link} onChange={(e) => setLink(e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" />
-                </div>
+              <div className="grid grid-cols-2 gap-4 mt-2">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-semibold text-foreground-muted">Urutan Tampil (Opsional)</label>
-                  <input type="number" value={order} onChange={(e) => setOrder(Number(e.target.value))} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" placeholder="Misal: 1, 2, 3..." />
+                  <input type="number" min="0" value={order} onChange={(e) => setOrder(Number(e.target.value))} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" placeholder="0" />
                 </div>
               </div>
 
-              <div className="flex gap-3 justify-end mt-4">
-                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>Batal</Button>
+              <div className="flex gap-3 justify-end mt-6 pt-4 border-t border-border">
+                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
+                  Batal
+                </Button>
                 <Button type="submit" variant="primary" disabled={isSaving}>
                   {isSaving ? "Menyimpan..." : "Simpan"}
                 </Button>
