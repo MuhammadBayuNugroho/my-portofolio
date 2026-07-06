@@ -4,7 +4,6 @@ import {
   User,
   Code2,
   FolderOpen,
-  Image,
   Briefcase,
   Award,
   BookOpen,
