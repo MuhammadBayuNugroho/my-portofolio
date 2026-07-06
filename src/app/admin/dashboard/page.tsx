@@ -135,7 +135,7 @@ export default function AdminDashboardPage() {
             {[
               { label: "➕ Buat Project Baru",       href: "/admin/projects" },
               { label: "✍️ Tulis Artikel Blog",      href: "/admin/blog" },
-              { label: "🖼️ Kelola Galeri",           href: "/admin/gallery" },
+              { label: "🖼️ Kelola Galeri",           href: "/admin/projects" },
               { label: "🔧 Tambah Skill",            href: "/admin/skills" },
               { label: "🏆 Tambah Sertifikat",       href: "/admin/certificates" },
               { label: "💬 Lihat Testimoni",         href: "/admin/testimonials" },
