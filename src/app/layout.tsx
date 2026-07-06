@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Outfit } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/context/auth-context";
+import WhatsAppButton from "@/components/ui/WhatsAppButton";
 import "./globals.css";
 
 // ─────────────────────────────────────────────────────────────────
@@ -195,6 +196,7 @@ export default function RootLayout({
         >
           <AuthProvider>
             {children}
+            <WhatsAppButton />
           </AuthProvider>
         </ThemeProvider>
       </body>

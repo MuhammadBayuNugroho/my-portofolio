@@ -90,8 +90,16 @@ export function getDuration(
     duration += `${remainingMonths} bulan`;
   }
 
-  const startLabel = format(start, "MMM yyyy");
-  const endLabel = isCurrent ? "Sekarang" : format(end, "MMM yyyy");
+  const startStr = startDate?.toString().trim() || "";
+  const startIsYearOnly = startStr.length === 4 && !isNaN(Number(startStr));
+  const startLabel = startIsYearOnly ? startStr : format(start, "MMM yyyy", { locale: idLocale });
+
+  let endLabel = "Sekarang";
+  if (!isCurrent && endDate) {
+    const endStr = endDate.toString().trim();
+    const endIsYearOnly = endStr.length === 4 && !isNaN(Number(endStr));
+    endLabel = endIsYearOnly ? endStr : format(end, "MMM yyyy", { locale: idLocale });
+  }
 
   return {
     display: `${startLabel} — ${endLabel}${duration ? ` (${duration})` : ""}`,
