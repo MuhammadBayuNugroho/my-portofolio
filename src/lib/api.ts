@@ -103,7 +103,28 @@ async function getCachedField<K extends keyof CachedData>(
   fetchAllPromise = apiFetch<CachedData>("get_all_data")
     .then((res) => {
       if (res.success && res.data) {
-        cachedData = res.data;
+        const sortArray = (arr: any[]) => {
+          if (!Array.isArray(arr)) return arr;
+          return arr.sort((a, b) => {
+            const orderA = typeof a.order === 'number' ? a.order : 0;
+            const orderB = typeof b.order === 'number' ? b.order : 0;
+            if (orderA !== orderB) return orderA - orderB;
+            
+            const dateA = new Date(a.startDate || a.createdAt || 0).getTime();
+            const dateB = new Date(b.startDate || b.createdAt || 0).getTime();
+            return dateB - dateA;
+          });
+        };
+
+        cachedData = {
+          settings: res.data.settings,
+          skills: sortArray(res.data.skills),
+          projects: sortArray(res.data.projects),
+          experiences: sortArray(res.data.experiences),
+          certificates: sortArray(res.data.certificates),
+          blogs: sortArray(res.data.blogs),
+          testimonials: sortArray(res.data.testimonials),
+        };
       }
       fetchAllPromise = null;
       return cachedData;

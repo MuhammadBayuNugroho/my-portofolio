@@ -68,8 +68,10 @@ export default function AdminCertificatesPage() {
   const [credentialUrl, setCredentialUrl] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [description, setDescription] = useState("");
-  const [status, setStatus] = useState<"Active" | "Expired">("Active");
+  const [status, setStatus] = useState<"Published" | "Archived">("Published");
   const [featured, setFeatured] = useState(false);
+  const [order, setOrder] = useState<number>(0);
+
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -107,8 +109,9 @@ export default function AdminCertificatesPage() {
     setCredentialUrl("");
     setImageUrl("");
     setDescription("");
-    setStatus("Active");
+    setStatus("Published");
     setFeatured(false);
+    setOrder(0);
     setIsModalOpen(true);
   };
 
@@ -123,8 +126,9 @@ export default function AdminCertificatesPage() {
     setCredentialUrl(cert.credentialUrl || "");
     setImageUrl(cert.imageUrl || "");
     setDescription(cert.description || "");
-    setStatus(cert.status || "Active");
+    setStatus(cert.status === "Archived" ? "Archived" : "Published");
     setFeatured(!!cert.featured);
+    setOrder(cert.order || 0);
     setIsModalOpen(true);
   };
 
@@ -187,6 +191,7 @@ export default function AdminCertificatesPage() {
       description,
       status,
       featured,
+      order: Number(order),
     };
 
     try {
@@ -278,21 +283,12 @@ export default function AdminCertificatesPage() {
                 <input type="text" value={issuer} onChange={(e) => setIssuer(e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" required />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">
-                    Kategori
-                    <span className="ml-1 text-[9px] text-foreground-subtle font-normal">(ketik untuk buat baru)</span>
-                  </label>
-                  <CategoryInput value={category} onChange={(v) => setCategory(v as CertificateCategory)} suggestions={existingCategories} />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Status</label>
-                  <select value={status} onChange={(e) => setStatus(e.target.value as "Active" | "Expired")} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs">
-                    <option value="Active">Active</option>
-                    <option value="Expired">Expired</option>
-                  </select>
-                </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-foreground-muted">
+                  Kategori
+                  <span className="ml-1 text-[9px] text-foreground-subtle font-normal">(ketik untuk buat baru)</span>
+                </label>
+                <CategoryInput value={category} onChange={(v) => setCategory(v as CertificateCategory)} suggestions={existingCategories} />
               </div>
 
               <div className="grid grid-cols-2 gap-4">

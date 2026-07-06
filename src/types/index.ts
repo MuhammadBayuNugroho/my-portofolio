@@ -37,6 +37,7 @@ export interface Pagination {
 /** Base entity fields every spreadsheet row has */
 export interface BaseEntity {
   id: string;
+  order?: number;
   createdAt: string;
   updatedAt?: string;
 }

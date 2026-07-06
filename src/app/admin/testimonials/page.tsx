@@ -27,6 +27,7 @@ export default function AdminTestimonialsPage() {
   const [projectId, setProjectId] = useState("");
   const [status, setStatus] = useState<"Published" | "Draft" | "Archived">("Published");
   const [featured, setFeatured] = useState(false);
+  const [order, setOrder] = useState<number>(0);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -60,6 +61,7 @@ export default function AdminTestimonialsPage() {
     setProjectId("");
     setStatus("Published");
     setFeatured(false);
+    setOrder(0);
     setIsModalOpen(true);
   };
 
@@ -75,6 +77,7 @@ export default function AdminTestimonialsPage() {
     setProjectId(testi.projectId || "");
     setStatus(testi.status || "Published");
     setFeatured(!!testi.featured);
+    setOrder(testi.order || 0);
     setIsModalOpen(true);
   };
 
@@ -136,6 +139,7 @@ export default function AdminTestimonialsPage() {
       projectId,
       status,
       featured,
+      order: Number(order),
     };
 
     try {
@@ -269,19 +273,24 @@ export default function AdminTestimonialsPage() {
                   <label className="text-xs font-semibold text-foreground-muted">Rating (1-5)</label>
                   <input type="number" min="1" max="5" value={rating} onChange={(e) => setRating(Number(e.target.value))} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" required />
                 </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Status</label>
-                  <select value={status} onChange={(e) => setStatus(e.target.value as any)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs">
+                <div className="flex flex-col gap-4 items-center mt-2">
+                  <label className="flex items-center gap-2 text-xs font-semibold text-foreground cursor-pointer">
+                    <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} className="rounded" />
+                    <span>Featured?</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-foreground-muted">Status & Urutan Tampil (Opsional)</label>
+                <div className="flex gap-2">
+                  <select value={status} onChange={(e) => setStatus(e.target.value as any)} className="w-1/2 rounded-md border border-border bg-background px-3 py-2 text-xs">
                     <option value="Published">Published</option>
                     <option value="Draft">Draft</option>
                     <option value="Archived">Archived</option>
                   </select>
+                  <input type="number" value={order} onChange={(e) => setOrder(Number(e.target.value))} className="w-1/2 rounded-md border border-border bg-background px-3 py-2 text-xs" placeholder="Urutan" />
                 </div>
-              </div>
-
-              <div className="flex items-center gap-2 mt-2">
-                <input type="checkbox" id="featuredCheck" checked={featured} onChange={(e) => setFeatured(e.target.checked)} className="rounded" />
-                <label htmlFor="featuredCheck" className="text-xs font-semibold text-foreground cursor-pointer">Featured?</label>
               </div>
 
               <div className="flex gap-3 justify-end mt-4">

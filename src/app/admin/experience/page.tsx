@@ -93,6 +93,7 @@ export default function AdminExperiencePage() {
   const [type, setType] = useState<ExperienceType>("Professional");
   const [logoUrl, setLogoUrl] = useState("");
   const [link, setLink] = useState("");
+  const [order, setOrder] = useState<number>(0);
   const [isSaving, setIsSaving] = useState(false);
 
   // Collect all existing types for autocomplete
@@ -141,6 +142,7 @@ export default function AdminExperiencePage() {
     setDescription(""); setHighlightsInput("");
     setType(defaultType);
     setLogoUrl(""); setLink("");
+    setOrder(0);
     setIsModalOpen(true);
   };
 
@@ -157,6 +159,7 @@ export default function AdminExperiencePage() {
     setType(exp.type as ExperienceType);
     setLogoUrl(exp.logoUrl || "");
     setLink(exp.link || "");
+    setOrder(exp.order || 0);
     setIsModalOpen(true);
   };
 
@@ -175,7 +178,7 @@ export default function AdminExperiencePage() {
     if (!user || !title || !organization) return;
     setIsSaving(true);
     const highlights = highlightsInput.split(",").map((h) => h.trim()).filter(Boolean);
-    const payload = { title, organization, location, startDate, endDate: isCurrent ? "" : endDate, isCurrent, description, highlights, type, logoUrl, link };
+    const payload = { title, organization, location, startDate, endDate: isCurrent ? "" : endDate, isCurrent, description, highlights, type, logoUrl, link, order: Number(order) };
     try {
       if (editingExp) {
         await experiencesApi.update(editingExp.id, payload, user.token);
@@ -370,13 +373,16 @@ export default function AdminExperiencePage() {
                     className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" placeholder="https://..." />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Website Link</label>
-                  <input type="text" value={link} onChange={(e) => setLink(e.target.value)}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" placeholder="https://..." />
+                  <label className="text-xs font-semibold text-foreground-muted">Tautan/Link Terkait (Opsional)</label>
+                  <input type="url" value={link} onChange={(e) => setLink(e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-foreground-muted">Urutan Tampil (Opsional)</label>
+                  <input type="number" value={order} onChange={(e) => setOrder(Number(e.target.value))} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" placeholder="Misal: 1, 2, 3..." />
                 </div>
               </div>
 
-              <div className="flex gap-3 justify-end pt-2">
+              <div className="flex gap-3 justify-end mt-4">
                 <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>Batal</Button>
                 <Button type="submit" variant="primary" disabled={isSaving}>
                   {isSaving ? "Menyimpan..." : "Simpan"}

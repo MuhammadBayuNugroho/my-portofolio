@@ -69,6 +69,7 @@ export default function AdminBlogPage() {
   const [status, setStatus] = useState<"Published" | "Draft" | "Archived">("Published");
   const [featured, setFeatured] = useState(false);
   const [readingTime, setReadingTime] = useState(5);
+  const [order, setOrder] = useState<number>(0);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -107,6 +108,7 @@ export default function AdminBlogPage() {
     setStatus("Published");
     setFeatured(false);
     setReadingTime(5);
+    setOrder(0);
     setIsModalOpen(true);
   };
 
@@ -122,6 +124,7 @@ export default function AdminBlogPage() {
     setStatus(blog.status || "Published");
     setFeatured(!!blog.featured);
     setReadingTime(blog.readingTime || 5);
+    setOrder(blog.order || 0);
     setIsModalOpen(true);
   };
 
@@ -185,6 +188,7 @@ export default function AdminBlogPage() {
       status,
       featured,
       readingTime: Number(readingTime),
+      order: Number(order),
     };
 
     try {
@@ -342,8 +346,8 @@ export default function AdminBlogPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
-                <div className="flex flex-col gap-1.5 col-span-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-semibold text-foreground-muted">Tags (Pisahkan dengan koma)</label>
                   <input
                     type="text"
@@ -354,30 +358,26 @@ export default function AdminBlogPage() {
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Estimasi Baca (Menit)</label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={readingTime}
-                    onChange={(e) => setReadingTime(Number(e.target.value))}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4 items-center mt-2">
-                <label className="flex items-center gap-2 text-xs font-semibold text-foreground cursor-pointer">
-                  <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} className="rounded" />
-                  <span>Featured?</span>
-                </label>
-                <div className="flex flex-col gap-1.5 col-span-2">
                   <label className="text-xs font-semibold text-foreground-muted">Status</label>
                   <select value={status} onChange={(e) => setStatus(e.target.value as "Published" | "Draft" | "Archived")} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs">
                     <option value="Published">Published</option>
                     <option value="Draft">Draft</option>
                     <option value="Archived">Archived</option>
                   </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-4 gap-4 items-center mt-2">
+                <label className="flex items-center gap-2 text-xs font-semibold text-foreground cursor-pointer">
+                  <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} className="rounded" />
+                  <span>Featured Article?</span>
+                </label>
+                <div className="flex flex-col gap-1.5 col-span-3">
+                  <label className="text-xs font-semibold text-foreground-muted">Waktu Baca & Urutan (Menit & Urutan Bebas)</label>
+                  <div className="flex gap-2">
+                    <input type="number" min="1" value={readingTime} onChange={(e) => setReadingTime(Number(e.target.value))} className="w-1/2 rounded-md border border-border bg-background px-3 py-2 text-xs" />
+                    <input type="number" value={order} onChange={(e) => setOrder(Number(e.target.value))} className="w-1/2 rounded-md border border-border bg-background px-3 py-2 text-xs" placeholder="Urutan (opsional)" />
+                  </div>
                 </div>
               </div>
 

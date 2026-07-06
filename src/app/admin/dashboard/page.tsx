@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import useSWR from "swr";
 import { useAuth } from "@/hooks/use-auth";
 import { projectsApi, blogsApi, certificatesApi, contactApi } from "@/lib/api";
@@ -141,14 +142,14 @@ export default function AdminDashboardPage() {
               { label: "📬 Pesan Kontak",            href: "/admin/contact" },
               { label: "💼 Kelola Experience",       href: "/admin/experience" },
             ].map((shortcut, idx) => (
-              <a
+              <Link
                 key={idx}
                 href={shortcut.href}
                 className="flex items-center justify-between p-3 rounded-md bg-background hover:bg-background-overlay border border-border text-xs font-semibold text-foreground transition-colors"
               >
                 <span>{shortcut.label}</span>
                 <ArrowUpRight size={14} className="text-foreground-subtle" />
-              </a>
+              </Link>
             ))}
           </Card>
         </div>
