@@ -48,7 +48,7 @@ function CategoryInput({
   );
 }
 
-const DEFAULT_SKILL_CATEGORIES = ["Frontend", "Backend", "Design", "Tools", "Soft Skills", "Language"];
+
 
 export default function AdminSkillsPage() {
   const { user } = useAuth();
@@ -59,15 +59,15 @@ export default function AdminSkillsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSkill, setEditingSkill] = useState<Skill | null>(null);
   const [name, setName] = useState("");
-  const [category, setCategory] = useState("Frontend");
+  const [category, setCategory] = useState("");
   const [level, setLevel] = useState<SkillLevel>("Intermediate");
   const [percentage, setPercentage] = useState(80);
   const [order, setOrder] = useState(1);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Suggestions are derived solely from existing skill categories (no hardcoded defaults)
   const existingCategories = useMemo(() => {
-    const cats = [...new Set(skills.map((s) => s.category))];
-    return [...new Set([...DEFAULT_SKILL_CATEGORIES, ...cats])];
+    return [...new Set(skills.map((s) => s.category).filter(Boolean))];
   }, [skills]);
 
   const fetchSkills = async () => {
@@ -82,7 +82,7 @@ export default function AdminSkillsPage() {
   useEffect(() => { fetchSkills(); }, []);
 
   const handleOpenCreate = () => {
-    setEditingSkill(null); setName(""); setCategory("Frontend");
+    setEditingSkill(null); setName(""); setCategory("");
     setLevel("Intermediate"); setPercentage(80); setOrder(skills.length + 1);
     setIsModalOpen(true);
   };

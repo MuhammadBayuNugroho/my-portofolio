@@ -48,7 +48,7 @@ function CategoryInput({
   );
 }
 
-const DEFAULT_CATEGORIES = ["Frontend", "Design", "Leadership", "Backend", "Cloud", "Data", "Soft Skills", "Other"];
+
 
 export default function AdminCertificatesPage() {
   const { user } = useAuth();
@@ -61,7 +61,7 @@ export default function AdminCertificatesPage() {
   const [editingCert, setEditingCert] = useState<Certificate | null>(null);
   const [title, setTitle] = useState("");
   const [issuer, setIssuer] = useState("");
-  const [category, setCategory] = useState<CertificateCategory>("Frontend");
+  const [category, setCategory] = useState<CertificateCategory>("");
   const [issueDate, setIssueDate] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
   const [credentialId, setCredentialId] = useState("");
@@ -75,9 +75,9 @@ export default function AdminCertificatesPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
+  // Suggestions are derived solely from existing certificate categories (no hardcoded defaults)
   const existingCategories = React.useMemo(() => {
-    const cats = [...new Set(certs.map((c) => c.category))];
-    return [...new Set([...DEFAULT_CATEGORIES, ...cats])];
+    return [...new Set(certs.map((c) => c.category).filter(Boolean))];
   }, [certs]);
 
   const fetchCerts = async () => {
@@ -102,7 +102,7 @@ export default function AdminCertificatesPage() {
     setEditingCert(null);
     setTitle("");
     setIssuer("");
-    setCategory("Frontend");
+    setCategory("");
     setIssueDate("");
     setExpiryDate("");
     setCredentialId("");

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { experiencesApi } from "@/lib/api";
-import type { Experience, ExperienceType } from "@/types";
+import type { Experience } from "@/types";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Plus, Edit2, Trash2, Loader2, Briefcase, MapPin, Calendar, Star } from "lucide-react";
@@ -257,7 +257,7 @@ export default function AdminExperiencePage() {
                 <p className="text-foreground-muted text-sm">{exp.organization}</p>
                 
                 <div className="flex items-center gap-4 mt-3 text-xs text-foreground-subtle">
-                  <span className="flex items-center gap-1"><Calendar size={12}/> {formatDateShort(exp.startDate)} - {exp.isCurrent ? "Sekarang" : formatDateShort(exp.endDate)}</span>
+                  <span className="flex items-center gap-1"><Calendar size={12}/> {formatDateShort(exp.startDate)} - {exp.isCurrent ? "Sekarang" : formatDateShort(exp.endDate ?? "")}</span>
                   {exp.location && <span className="flex items-center gap-1"><MapPin size={12}/> {exp.location}</span>}
                 </div>
               </div>

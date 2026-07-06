@@ -48,7 +48,7 @@ function CategoryInput({
   );
 }
 
-const DEFAULT_CATEGORIES = ["Tech", "Design", "Tutorial", "Lifestyle"];
+
 
 export default function AdminBlogPage() {
   const { user } = useAuth();
@@ -65,7 +65,7 @@ export default function AdminBlogPage() {
   const [contentMarkdown, setContentMarkdown] = useState("");
   const [coverImage, setCoverImage] = useState("");
   const [tagsInput, setTagsInput] = useState("");
-  const [category, setCategory] = useState("Tech");
+  const [category, setCategory] = useState("");
   const [status, setStatus] = useState<"Published" | "Draft" | "Archived">("Published");
   const [featured, setFeatured] = useState(false);
   const [readingTime, setReadingTime] = useState(5);
@@ -73,9 +73,9 @@ export default function AdminBlogPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
+  // Suggestions are derived solely from existing blog categories (no hardcoded defaults)
   const existingCategories = React.useMemo(() => {
-    const cats = [...new Set(blogs.map((b) => b.category))];
-    return [...new Set([...DEFAULT_CATEGORIES, ...cats])];
+    return [...new Set(blogs.map((b) => b.category).filter(Boolean))];
   }, [blogs]);
 
   const fetchBlogs = async () => {
@@ -104,7 +104,7 @@ export default function AdminBlogPage() {
     setContentMarkdown("");
     setCoverImage("");
     setTagsInput("");
-    setCategory("Tech");
+    setCategory("");
     setStatus("Published");
     setFeatured(false);
     setReadingTime(5);
