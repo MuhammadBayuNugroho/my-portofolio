@@ -68,7 +68,7 @@ export default function AdminCertificatesPage() {
   const [credentialUrl, setCredentialUrl] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [description, setDescription] = useState("");
-  const [status, setStatus] = useState<"Published" | "Archived">("Published");
+  const [status, setStatus] = useState<"Active" | "Expired">("Active");
   const [featured, setFeatured] = useState(false);
   const [order, setOrder] = useState<number>(0);
 
@@ -109,7 +109,7 @@ export default function AdminCertificatesPage() {
     setCredentialUrl("");
     setImageUrl("");
     setDescription("");
-    setStatus("Published");
+    setStatus("Active");
     setFeatured(false);
     setOrder(0);
     setIsModalOpen(true);
@@ -126,7 +126,7 @@ export default function AdminCertificatesPage() {
     setCredentialUrl(cert.credentialUrl || "");
     setImageUrl(cert.imageUrl || "");
     setDescription(cert.description || "");
-    setStatus(cert.status === "Archived" ? "Archived" : "Published");
+    setStatus(cert.status || "Active");
     setFeatured(!!cert.featured);
     setOrder(cert.order || 0);
     setIsModalOpen(true);
@@ -283,6 +283,8 @@ export default function AdminCertificatesPage() {
                 <input type="text" value={issuer} onChange={(e) => setIssuer(e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" required />
               </div>
 
+
+
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold text-foreground-muted">
                   Kategori
@@ -324,9 +326,21 @@ export default function AdminCertificatesPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 mt-2">
-                <input type="checkbox" id="featuredCheck" checked={featured} onChange={(e) => setFeatured(e.target.checked)} className="rounded" />
-                <label htmlFor="featuredCheck" className="text-xs font-semibold text-foreground cursor-pointer">Featured?</label>
+              <div className="grid grid-cols-4 gap-4 items-center mt-2">
+                <label className="flex items-center gap-2 text-xs font-semibold text-foreground cursor-pointer">
+                  <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} className="rounded" />
+                  <span>Featured?</span>
+                </label>
+                <div className="flex flex-col gap-1.5 col-span-3">
+                  <label className="text-xs font-semibold text-foreground-muted">Status & Urutan Tampil (Opsional)</label>
+                  <div className="flex gap-2">
+                    <select value={status} onChange={(e) => setStatus(e.target.value as "Active" | "Expired")} className="w-1/2 rounded-md border border-border bg-background px-3 py-2 text-xs">
+                      <option value="Active">Active</option>
+                      <option value="Expired">Expired</option>
+                    </select>
+                    <input type="number" value={order} onChange={(e) => setOrder(Number(e.target.value))} className="w-1/2 rounded-md border border-border bg-background px-3 py-2 text-xs" placeholder="Urutan (opsional)" />
+                  </div>
+                </div>
               </div>
 
               <div className="flex gap-3 justify-end mt-4">
