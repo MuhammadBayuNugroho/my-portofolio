@@ -36,17 +36,22 @@ export default function ExperiencePage() {
 
   // Filtering Logic
   const filteredData = experiences.filter((exp) => {
+    const typeStr = (exp.type || "").toString().trim().toLowerCase();
+    
     if (activeTab === "work") {
-      if (!["Professional", "Proffesional", "Freelance", "Career"].includes(exp.type)) return false;
-      return activeWorkType === "All" || exp.type === activeWorkType || (exp.type === "Proffesional" && activeWorkType === "Professional");
+      if (!["professional", "proffesional", "freelance", "career"].includes(typeStr)) return false;
+      const awt = activeWorkType.toLowerCase();
+      return awt === "all" || typeStr === awt || (typeStr === "proffesional" && awt === "professional");
     }
     if (activeTab === "organization") {
-      if (!["Organizational", "Volunteer"].includes(exp.type)) return false;
-      return activeOrgType === "All" || exp.type === activeOrgType;
+      if (!["organizational", "volunteer"].includes(typeStr)) return false;
+      const aot = activeOrgType.toLowerCase();
+      return aot === "all" || typeStr === aot;
     }
     if (activeTab === "achievement") {
-      if (!["Achievement", "Leadership"].includes(exp.type)) return false;
-      return activeAchType === "All" || exp.type === activeAchType;
+      if (!["achievement", "leadership"].includes(typeStr)) return false;
+      const aat = activeAchType.toLowerCase();
+      return aat === "all" || typeStr === aat;
     }
     return false;
   });

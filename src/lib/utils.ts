@@ -20,15 +20,30 @@ export function cn(...inputs: ClassValue[]): string {
 // DATE FORMATTING UTILITIES
 // ─────────────────────────────────────────────────────────────────
 
+export function safeParseDate(d: string | number | Date): Date {
+  if (d instanceof Date) return d;
+  if (typeof d === "number") return new Date(d, 0, 1);
+  if (typeof d === "string" && /^\d{4}$/.test(d.trim())) {
+    return new Date(parseInt(d.trim(), 10), 0, 1);
+  }
+  try {
+    const parsed = parseISO(d as string);
+    return isNaN(parsed.getTime()) ? new Date(d) : parsed;
+  } catch {
+    return new Date(d);
+  }
+}
+
 /**
  * formatDate — Format ISO date string to localized Indonesian format.
  * @example formatDate("2026-06-27") → "27 Juni 2026"
  */
 export function formatDate(
-  date: string | Date,
+  date: string | number | Date,
   formatStr: string = "d MMMM yyyy"
 ): string {
-  const d = typeof date === "string" ? parseISO(date) : date;
+  const d = safeParseDate(date);
+  if (isNaN(d.getTime())) return String(date);
   return format(d, formatStr, { locale: idLocale });
 }
 
@@ -36,7 +51,7 @@ export function formatDate(
  * formatDateShort — Short date format.
  * @example formatDateShort("2026-06-27") → "Jun 2026"
  */
-export function formatDateShort(date: string | Date): string {
+export function formatDateShort(date: string | number | Date): string {
   return formatDate(date, "MMM yyyy");
 }
 
@@ -44,8 +59,9 @@ export function formatDateShort(date: string | Date): string {
  * formatRelativeDate — Human-readable relative date.
  * @example formatRelativeDate("2026-06-20") → "7 hari yang lalu"
  */
-export function formatRelativeDate(date: string | Date): string {
-  const d = typeof date === "string" ? parseISO(date) : date;
+export function formatRelativeDate(date: string | number | Date): string {
+  const d = safeParseDate(date);
+  if (isNaN(d.getTime())) return String(date);
   return formatDistanceToNow(d, { addSuffix: true, locale: idLocale });
 }
 
@@ -53,19 +69,6 @@ export function getDuration(
   startDate: string | number,
   endDate?: string | number
 ): { display: string; isCurrent: boolean } {
-  const safeParseDate = (d: string | number): Date => {
-    if (typeof d === "number") return new Date(d, 0, 1);
-    if (typeof d === "string" && /^\d{4}$/.test(d.trim())) {
-      return new Date(parseInt(d.trim(), 10), 0, 1);
-    }
-    try {
-      const parsed = parseISO(d as string);
-      return isNaN(parsed.getTime()) ? new Date(d) : parsed;
-    } catch {
-      return new Date(d);
-    }
-  };
-
   const start = safeParseDate(startDate);
   const end = endDate ? safeParseDate(endDate) : new Date();
   const isCurrent = !endDate;

@@ -7,10 +7,10 @@ import type { Experience, ExperienceType } from "@/types";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Plus, Edit2, Trash2, Loader2, Briefcase, MapPin, Calendar, Star } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatDateShort } from "@/lib/utils";
 
 // ─── Jenis tipe berdasarkan tab ─────────────────────────────────
-const WORK_TYPES: ExperienceType[] = ["Professional", "Freelance", "Career"];
+const WORK_TYPES: ExperienceType[] = ["Professional", "Proffesional", "Freelance", "Career"];
 const ORG_TYPES: ExperienceType[] = ["Organizational", "Volunteer"];
 const ACH_TYPES: ExperienceType[] = ["Achievement", "Leadership"];
 const EDU_TYPES: ExperienceType[] = ["Education", "Pendidikan"];
@@ -120,10 +120,11 @@ export default function AdminExperiencePage() {
   // Data filtered by tab
   const displayed = useMemo(() => {
     return experiences.filter((e) => {
-      if (activeTab === "work") return WORK_TYPES.includes(e.type as ExperienceType);
-      if (activeTab === "organization") return ORG_TYPES.includes(e.type as ExperienceType);
-      if (activeTab === "achievement") return ACH_TYPES.includes(e.type as ExperienceType);
-      if (activeTab === "education") return EDU_TYPES.includes(e.type as ExperienceType);
+      const typeStr = (e.type || "").toString().trim().toLowerCase();
+      if (activeTab === "work") return ["professional", "proffesional", "freelance", "career"].includes(typeStr);
+      if (activeTab === "organization") return ["organizational", "volunteer"].includes(typeStr);
+      if (activeTab === "achievement") return ["achievement", "leadership"].includes(typeStr);
+      if (activeTab === "education") return ["education", "pendidikan"].includes(typeStr);
       return false;
     });
   }, [experiences, activeTab]);
@@ -255,7 +256,7 @@ export default function AdminExperiencePage() {
             <Card key={exp.id} className="p-5 flex flex-col gap-3" hoverEffect={false}>
               <div className="flex justify-between items-start">
                 <span className="text-[10px] text-accent uppercase font-bold tracking-wider bg-accent/10 px-2 py-0.5 rounded">
-                  {exp.type}
+                  {exp.type.toString().trim().toLowerCase() === "proffesional" ? "Professional" : exp.type}
                 </span>
                 <div className="flex gap-1">
                   <button onClick={() => handleOpenEdit(exp)} className="text-foreground-subtle hover:text-foreground p-1.5 rounded transition-colors hover:bg-background-overlay">
@@ -275,7 +276,7 @@ export default function AdminExperiencePage() {
                 </div>
                 <div className="flex items-center gap-1 mt-1 text-[10px] text-foreground-subtle">
                   <Calendar size={10} />
-                  <span>{exp.startDate} — {exp.isCurrent ? "Sekarang" : (exp.endDate || "-")}</span>
+                  <span>{formatDateShort(exp.startDate as string)} — {exp.isCurrent ? "Sekarang" : (exp.endDate ? formatDateShort(exp.endDate as string) : "-")}</span>
                 </div>
               </div>
 
