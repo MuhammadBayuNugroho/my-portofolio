@@ -6,7 +6,6 @@ import { Footer } from "@/components/public/Footer";
 import { Container } from "@/components/public/Container";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import type { ExperienceType } from "@/types";
 import { getDuration } from "@/lib/utils";
 import { Briefcase, Calendar, MapPin, CheckCircle2, Award, Landmark, Compass, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
