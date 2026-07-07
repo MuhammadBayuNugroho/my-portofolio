@@ -21,6 +21,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,14 +32,17 @@ jobs:
           node-version: "20"
           cache: npm
 
+      # Use `npm ci` instead of `npm install` for deterministic,
+      # reproducible installs in CI — respects package-lock.json exactly.
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: npm ci --legacy-peer-deps
 
       - name: Build with Next.js
         env:
+          NODE_ENV: production
+          NEXT_TELEMETRY_DISABLED: 1
           NEXT_PUBLIC_GAS_BASE_URL: ${{ secrets.GAS_BASE_URL }}
           NEXT_PUBLIC_SITE_URL: ${{ secrets.SITE_URL }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
         run: npm run build
 
       - name: Upload artifact

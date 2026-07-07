@@ -28,7 +28,7 @@ const outfit = Outfit({
 // ─────────────────────────────────────────────────────────────────
 // SITE METADATA CONSTANTS
 // ─────────────────────────────────────────────────────────────────
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://muhammadbayunugroho.github.io/my-portofolio/";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://masbe.my.id";
 const SITE_NAME = "Muhammad Bayu Nugroho";
 const SITE_DESCRIPTION =
   "Frontend Developer, Web Designer & Graphic Designer. Building beautiful digital experiences with code, design, and leadership.";
@@ -144,9 +144,10 @@ export default function RootLayout({
       <head>
         {/* Preconnect to Google Fonts CDN for performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        {/* Explicit Favicon for GitHub Pages */}
-        <link rel="icon" type="image/jpeg" href={`${SITE_URL}/favicon.jpg`} />
-
+        {/*
+         * Favicon is handled automatically by Next.js App Router
+         * via src/app/icon.jpg — no manual <link rel="icon"> needed.
+         */}
         <link
           rel="preconnect"
           href="https://fonts.gstatic.com"

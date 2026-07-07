@@ -9,7 +9,7 @@ export const SITE_CONFIG = {
   tagline: "Frontend Developer | Web Designer | Graphic Designer",
   shortBio:
     "I build beautiful digital experiences at the intersection of clean code, thoughtful design, and purposeful leadership.",
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://muhammadbayunugroho.github.io/my-portofolio",
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://masbe.my.id",
   email: "bayu27.mbn@gmail.com",
   location: "Jepara | Central Java | Indonesia",
   github: "https://github.com/MuhammadBayuNugroho",
