@@ -24,7 +24,7 @@ export function Sidebar() {
         <div className="h-16 flex items-center gap-2 px-6 border-b border-border/60">
           <Shield className="text-accent" size={20} />
           <span className="font-display font-bold text-caption text-foreground tracking-tight">
-            BMN Admin Panel
+            Admin Panel e Mas Bayu
           </span>
         </div>
 
@@ -71,7 +71,7 @@ export function Sidebar() {
           <Compass size={16} />
           Kembali ke Web
         </Link>
-        
+
         <button
           onClick={handleLogout}
           className="flex w-full items-center gap-3 px-4 py-2 rounded-md text-xs font-medium text-error hover:bg-error/10 transition-colors cursor-pointer text-left"

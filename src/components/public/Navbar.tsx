@@ -33,7 +33,7 @@ export function Navbar() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link href="/" className="font-display text-h3 font-bold tracking-tight text-foreground">
-            BMN<span className="text-accent">.</span>
+            BN<span className="text-accent">.</span>
           </Link>
 
           {/* Desktop Nav */}
