@@ -110,7 +110,7 @@ export const metadata: Metadata = {
 
   // Verification (fill in after deploying)
   verification: {
-    // google: "YOUR_GOOGLE_SEARCH_CONSOLE_VERIFICATION_CODE",
+    google: "2Rnjt6d9urJP7tLI-0jyQnO0veOACoNCqI7wyP-_xJU",
   },
 };
 
@@ -146,7 +146,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         {/* Explicit Favicon for GitHub Pages */}
         <link rel="icon" type="image/jpeg" href={`${SITE_URL}/favicon.jpg`} />
-        
+
         <link
           rel="preconnect"
           href="https://fonts.gstatic.com"
@@ -165,7 +165,7 @@ export default function RootLayout({
               description: SITE_DESCRIPTION,
               sameAs: [
                 "https://github.com/MuhammadBayuNugroho",
-                "https://linkedin.com/in/muhbayunugroho",
+                "https://linkedin.com/in/muhammadbayunugroho",
               ],
               knowsAbout: [
                 "Frontend Development",
