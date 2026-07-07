@@ -8,7 +8,7 @@ export const METADATA = {
   // Site identity
   siteName: "Muhammad Bayu Nugroho",
   siteUrl:
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://muhbayunugroho.github.io",
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://muhammadbayunugroho.github.io/my-portofolio",
 
   // Default Open Graph image (1200x630)
   defaultOgImage: "/og-image.jpg",

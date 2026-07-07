@@ -28,7 +28,7 @@ const outfit = Outfit({
 // ─────────────────────────────────────────────────────────────────
 // SITE METADATA CONSTANTS
 // ─────────────────────────────────────────────────────────────────
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://muhbayunugroho.github.io";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://muhammadbayunugroho.github.io/my-portofolio/";
 const SITE_NAME = "Muhammad Bayu Nugroho";
 const SITE_DESCRIPTION =
   "Frontend Developer, Web Designer & Graphic Designer. Building beautiful digital experiences with code, design, and leadership.";

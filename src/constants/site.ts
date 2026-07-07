@@ -9,13 +9,13 @@ export const SITE_CONFIG = {
   tagline: "Frontend Developer | Web Designer | Graphic Designer",
   shortBio:
     "I build beautiful digital experiences at the intersection of clean code, thoughtful design, and purposeful leadership.",
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://muhbayunugroho.github.io",
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://muhammadbayunugroho.github.io/my-portofolio",
   email: "bayu27.mbn@gmail.com",
-  location: "Indonesia",
+  location: "Jepara | Central Java | Indonesia",
   github: "https://github.com/MuhammadBayuNugroho",
   linkedin: "https://www.linkedin.com/in/muhammad-bayu-nugroho-61a922234/",
   instagram: "https://instagram.com/mass_bayuuu",
-  twitter: "https://twitter.com/muhbayunugroho",
+  // twitter: "https://twitter.com/muhbayunugroho",
   resumeUrl: "#",
 
   // Professional stats for Hero section
