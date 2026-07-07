@@ -19,7 +19,7 @@ export const METADATA = {
   // Social profiles for JSON-LD
   socialProfiles: {
     github: "https://github.com/muhbayunugroho",
-    linkedin: "https://linkedin.com/in/muhbayunugroho",
+    linkedin: "https://www.linkedin.com/in/muhammad-bayu-nugroho-61a922234/",
     instagram: "https://instagram.com/muhbayunugroho",
   },
 

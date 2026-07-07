@@ -9,7 +9,7 @@ export const dynamic = "force-static";
  */
 export default function robots(): MetadataRoute.Robots {
   const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://muhbayunugroho.github.io";
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://muhammadbayunugroho.github.io/my-portofolio";
 
   return {
     rules: [

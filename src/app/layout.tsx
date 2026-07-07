@@ -165,7 +165,7 @@ export default function RootLayout({
               description: SITE_DESCRIPTION,
               sameAs: [
                 "https://github.com/MuhammadBayuNugroho",
-                "https://linkedin.com/in/muhammadbayunugroho",
+                "https://www.linkedin.com/in/muhammad-bayu-nugroho-61a922234/",
               ],
               knowsAbout: [
                 "Frontend Development",
