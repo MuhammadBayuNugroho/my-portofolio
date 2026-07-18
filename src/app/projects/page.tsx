@@ -95,9 +95,9 @@ export default function ProjectsPage() {
               <Loader2 className="animate-spin text-accent" size={32} />
             </div>
           ) : filteredProjects.length > 0 ? (
-            <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredProjects.map((project) => (
-                <div key={project.id} className="break-inside-avoid">
+                <div key={project.id} className="h-full">
                   {project.isGalleryOnly ? (
                     <div
                       onClick={() => setSelectedGalleryItem(project)}
