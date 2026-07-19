@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* ── Tailwind v4: class-based dark mode (compatible with next-themes) ──────── */
+/* Without this, dark: prefix responds to OS preference (media query), not     */
+/* the class="dark" added by next-themes ThemeProvider on the <html> element.  */
+@custom-variant dark (&:where(.dark, .dark *));
+
+
 /* ================================================================
    TAILWIND v4 THEME CONFIGURATION
    In v4, design tokens are defined here via @theme directive
