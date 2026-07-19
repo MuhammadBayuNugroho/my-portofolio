@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { SITE_CONFIG } from "@/constants/site";
-import { BlogPageClient } from "./BlogPageClient";
+import { BlogPageClient } from "@/app/blog/BlogPageClient";
 
 // ─────────────────────────────────────────────────────────────────
 // METADATA — Server-side SEO (only possible in Server Components)

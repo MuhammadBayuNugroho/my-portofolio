@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { SITE_CONFIG } from "@/constants/site";
-import { SkillsPageClient } from "./SkillsPageClient";
+import { SkillsPageClient } from "@/app/skills/SkillsPageClient";
 
 // ─────────────────────────────────────────────────────────────────
 // METADATA — Server-side SEO
