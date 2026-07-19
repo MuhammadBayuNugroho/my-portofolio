@@ -13,6 +13,8 @@ import type { Metadata } from "next";
 import { SITE_CONFIG } from "@/constants/site";
 import { BlogMetrics } from "@/components/public/blog/BlogMetrics";
 
+export const revalidate = 60; // ISR: Cache akan diperbarui maksimal setiap 60 detik
+
 interface BlogDetailPageProps {
   params: Promise<{ slug: string }>;
 }

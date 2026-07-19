@@ -13,6 +13,8 @@ import { projectsApi } from "@/lib/api";
 import type { Metadata } from "next";
 import { SITE_CONFIG } from "@/constants/site";
 
+export const revalidate = 60; // ISR: Cache akan diperbarui maksimal setiap 60 detik
+
 interface ProjectDetailPageProps {
   params: Promise<{ slug: string }>;
 }
