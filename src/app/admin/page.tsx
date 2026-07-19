@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Lock, User, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { Input } from "@/components/ui";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -79,52 +80,43 @@ export default function AdminLoginPage() {
             )}
 
             {/* Username field */}
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="username" className="text-xs font-semibold text-foreground-muted">Username</label>
-              <div className="relative">
-                <input
-                  id="username"
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full rounded-md border border-border bg-background px-4 py-2 pl-10 text-xs text-foreground focus-visible:outline-2 focus-visible:outline-accent"
-                  placeholder="admin"
-                  required
-                />
-                <User className="absolute left-3 top-2.5 text-foreground-subtle h-4 w-4" />
-              </div>
-            </div>
+            <Input
+              id="username"
+              type="text"
+              label="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="admin"
+              iconLeft={<User size={15} />}
+              required
+            />
 
             {/* Password field */}
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="password" className="text-xs font-semibold text-foreground-muted">Password</label>
-              <div className="relative">
-                <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-md border border-border bg-background px-4 py-2 pl-10 pr-10 text-xs text-foreground focus-visible:outline-2 focus-visible:outline-accent"
-                  placeholder="••••••••"
-                  required
-                />
-                <Lock className="absolute left-3 top-2.5 text-foreground-subtle h-4 w-4" />
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              label="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              iconLeft={<Lock size={15} />}
+              iconRight={
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-2.5 text-foreground-subtle hover:text-foreground cursor-pointer"
+                  className="text-foreground-subtle hover:text-foreground cursor-pointer flex items-center justify-center p-0.5"
                 >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
-              </div>
-            </div>
+              }
+              required
+            />
 
             {/* Submit button */}
             <Button
               type="submit"
-              variant="primary"
               disabled={isSubmitting}
-              className="w-full mt-2"
+              className="w-full mt-2 py-2.5 rounded-lg text-xs font-semibold"
             >
               {isSubmitting ? "Sedang Masuk..." : "Masuk ke Dashboard"}
             </Button>

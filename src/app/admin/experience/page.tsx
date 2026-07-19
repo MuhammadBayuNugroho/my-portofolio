@@ -6,6 +6,7 @@ import { experiencesApi } from "@/lib/api";
 import type { Experience } from "@/types";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { Modal, Input, Textarea } from "@/components/ui";
 import { Plus, Edit2, Trash2, Loader2, Briefcase, MapPin, Calendar, Star } from "lucide-react";
 import { cn, formatDateShort } from "@/lib/utils";
 
@@ -34,32 +35,34 @@ function CategoryInput({
     setOpen(false);
   };
 
+  useEffect(() => {
+    setInputVal(value);
+  }, [value]);
+
   return (
     <div className="flex flex-col gap-1.5 relative">
-      <label className="text-xs font-semibold text-foreground-muted">{label}</label>
-      <input
-        type="text"
-        value={inputVal}
-        onChange={(e) => { setInputVal(e.target.value); onChange(e.target.value); setOpen(true); }}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setTimeout(() => setOpen(false), 150)}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs focus-visible:outline-2 focus-visible:outline-accent"
-        placeholder="Ketik atau pilih..."
-      />
-      {open && filtered.length > 0 && (
-        <div className="absolute top-full left-0 right-0 z-20 mt-1 rounded-md border border-border bg-background-elevated shadow-lg overflow-hidden">
-          {filtered.map((s) => (
-            <button
-              key={s}
-              type="button"
-              onMouseDown={() => commit(s)}
-              className="w-full text-left px-3 py-2 text-xs hover:bg-background-overlay text-foreground-muted hover:text-foreground transition-colors"
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-      )}
+      <label className="text-xs font-semibold text-foreground-muted select-none">{label}</label>
+      <div className="relative">
+        <input
+          type="text"
+          value={inputVal}
+          onChange={(e) => { setInputVal(e.target.value); onChange(e.target.value); setOpen(true); }}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setTimeout(() => setOpen(false), 200)}
+          className="w-full rounded-lg border border-[rgba(0,0,0,0.15)] dark:border-[rgba(255,255,255,0.15)] bg-background px-3.5 py-2.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent"
+          placeholder="Ketik atau pilih..."
+        />
+        {open && filtered.length > 0 && (
+          <div className="absolute top-full left-0 right-0 z-30 mt-1 rounded-xl border border-[rgba(0,0,0,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#111827] shadow-[0_10px_30px_rgba(0,0,0,0.15)] overflow-hidden">
+            {filtered.map((s) => (
+              <button key={s} type="button" onMouseDown={() => commit(s)}
+                className="w-full text-left px-3.5 py-2.5 text-xs hover:bg-background-overlay text-foreground-muted hover:text-foreground transition-colors cursor-pointer">
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -276,79 +279,103 @@ export default function AdminExperiencePage() {
       )}
 
       {/* Edit/Create Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <Card className="max-w-2xl w-full p-6 my-8" hoverEffect={false}>
-            <h2 className="font-display text-h3 font-bold text-foreground mb-4">
-              {editingExp ? "Edit Pengalaman" : "Tambah Pengalaman"}
-            </h2>
-            <form onSubmit={handleSave} className="flex flex-col gap-4 max-h-[80vh] overflow-y-auto pr-2">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Jabatan / Posisi / Penghargaan</label>
-                  <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" required />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Nama Organisasi / Perusahaan</label>
-                  <input type="text" value={organization} onChange={(e) => setOrganization(e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" required />
-                </div>
-              </div>
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={editingExp ? "Edit Pengalaman" : "Tambah Pengalaman"}
+        maxWidth="max-w-2xl"
+        asForm
+        onSubmit={handleSave}
+        footer={
+          <>
+            <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
+              Batal
+            </Button>
+            <Button type="submit" disabled={isSaving}>
+              {isSaving ? "Menyimpan..." : "Simpan"}
+            </Button>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Jabatan / Posisi / Penghargaan *"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+            />
+            <Input
+              label="Nama Organisasi / Perusahaan *"
+              value={organization}
+              onChange={(e) => setOrganization(e.target.value)}
+              required
+            />
+          </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Lokasi (Opsional)</label>
-                  <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" placeholder="Jakarta, Indonesia" />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Kategori / Tipe (Ketik untuk buat baru)</label>
-                  <CategoryInput value={type} onChange={setType} suggestions={existingTypes} label="" />
-                </div>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+            <Input
+              label="Lokasi (Opsional)"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="Jakarta, Indonesia"
+            />
+            <CategoryInput value={type} onChange={setType} suggestions={existingTypes} label="Kategori / Tipe" />
+          </div>
 
-              <div className="grid grid-cols-3 gap-4 items-end">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Tanggal Mulai</label>
-                  <input type="text" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" placeholder="Misal: 2021-01 atau Jan 2021" />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Tanggal Selesai</label>
-                  <input type="text" value={endDate} onChange={(e) => setEndDate(e.target.value)} disabled={isCurrent} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs disabled:opacity-50" placeholder="Biarkan kosong jika masih aktif" />
-                </div>
-                <div className="flex items-center gap-2 pb-2">
-                  <input type="checkbox" id="isCurrent" checked={isCurrent} onChange={(e) => setIsCurrent(e.target.checked)} className="rounded" />
-                  <label htmlFor="isCurrent" className="text-xs font-semibold text-foreground cursor-pointer">Masih Aktif</label>
-                </div>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <Input
+              label="Tanggal Mulai *"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              placeholder="Misal: 2021-01"
+              required
+            />
+            <Input
+              label="Tanggal Selesai"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              disabled={isCurrent}
+              placeholder="Misal: 2023-05"
+            />
+            <label className="flex items-center gap-2.5 text-xs font-semibold text-foreground cursor-pointer select-none pb-3">
+              <input
+                type="checkbox"
+                checked={isCurrent}
+                onChange={(e) => setIsCurrent(e.target.checked)}
+                className="rounded border-zinc-300 dark:border-zinc-700 accent-accent"
+              />
+              <span>Masih Aktif</span>
+            </label>
+          </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-foreground-muted">Deskripsi Tugas (Opsional)</label>
-                <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs h-20" />
-              </div>
+          <Textarea
+            label="Deskripsi Tugas (Opsional)"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={3}
+          />
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-foreground-muted">Highlight Pencapaian (Pisahkan dengan koma)</label>
-                <textarea value={highlightsInput} onChange={(e) => setHighlightsInput(e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs h-16" placeholder="Meningkatkan konversi 20%, Memimpin tim 5 orang..." />
-              </div>
+          <Textarea
+            label="Highlight Pencapaian (Pisahkan dengan koma)"
+            value={highlightsInput}
+            onChange={(e) => setHighlightsInput(e.target.value)}
+            placeholder="Meningkatkan konversi 20%, Memimpin tim 5 orang..."
+            rows={2}
+          />
 
-              <div className="grid grid-cols-2 gap-4 mt-2">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Urutan Tampil (Opsional)</label>
-                  <input type="number" min="0" value={order} onChange={(e) => setOrder(Number(e.target.value))} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" placeholder="0" />
-                </div>
-              </div>
-
-              <div className="flex gap-3 justify-end mt-6 pt-4 border-t border-border">
-                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
-                  Batal
-                </Button>
-                <Button type="submit" variant="primary" disabled={isSaving}>
-                  {isSaving ? "Menyimpan..." : "Simpan"}
-                </Button>
-              </div>
-            </form>
-          </Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              type="number"
+              min="0"
+              label="Urutan Tampil (Opsional)"
+              value={order}
+              onChange={(e) => setOrder(Number(e.target.value))}
+              placeholder="0"
+            />
+          </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

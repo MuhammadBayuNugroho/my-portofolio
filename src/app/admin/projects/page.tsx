@@ -6,7 +6,10 @@ import { projectsApi, mediaApi } from "@/lib/api";
 import type { Project } from "@/types";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Plus, Edit2, Trash2, Loader2, Upload, ExternalLink, Github, Figma, Image as ImageIcon, X, LayoutGrid, Package } from "lucide-react";
+import { Modal, Input, Textarea } from "@/components/ui";
+import { ImageUpload } from "@/components/admin/ImageUpload";
+import { GalleryUpload } from "@/components/admin/GalleryUpload";
+import { Plus, Edit2, Trash2, Loader2, ExternalLink, Github, Figma, LayoutGrid, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─── Flexible Category Input ────────────────────────────────────
@@ -24,27 +27,32 @@ function CategoryInput({
     (s) => s.toLowerCase().includes(value.toLowerCase()) && s !== value
   );
   return (
-    <div className="relative">
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => { onChange(e.target.value); setOpen(true); }}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setTimeout(() => setOpen(false), 150)}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs focus-visible:outline-2 focus-visible:outline-accent"
-        placeholder="Contoh: Web, UI/UX, Mobile... (ketik untuk buat baru)"
-        required
-      />
-      {open && filtered.length > 0 && (
-        <div className="absolute top-full left-0 right-0 z-20 mt-1 rounded-md border border-border bg-background-elevated shadow-lg overflow-hidden">
-          {filtered.map((s) => (
-            <button key={s} type="button" onMouseDown={() => { onChange(s); setOpen(false); }}
-              className="w-full text-left px-3 py-2 text-xs hover:bg-background-overlay text-foreground-muted hover:text-foreground transition-colors">
-              {s}
-            </button>
-          ))}
-        </div>
-      )}
+    <div className="relative flex flex-col gap-1.5">
+      <label className="text-xs font-semibold text-foreground-muted select-none">
+        Kategori * <span className="text-[10px] text-foreground-subtle font-normal">(ketik untuk baru)</span>
+      </label>
+      <div className="relative">
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => { onChange(e.target.value); setOpen(true); }}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setTimeout(() => setOpen(false), 200)}
+          className="w-full rounded-lg border border-[rgba(0,0,0,0.15)] dark:border-[rgba(255,255,255,0.15)] bg-background px-3.5 py-2.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent"
+          placeholder="Contoh: Web, UI/UX, Mobile..."
+          required
+        />
+        {open && filtered.length > 0 && (
+          <div className="absolute top-full left-0 right-0 z-30 mt-1 rounded-xl border border-[rgba(0,0,0,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#111827] shadow-[0_10px_30px_rgba(0,0,0,0.15)] overflow-hidden">
+            {filtered.map((s) => (
+              <button key={s} type="button" onMouseDown={() => { onChange(s); setOpen(false); }}
+                className="w-full text-left px-3.5 py-2.5 text-xs hover:bg-background-overlay text-foreground-muted hover:text-foreground transition-colors cursor-pointer">
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -65,7 +73,7 @@ export default function AdminProjectsPage() {
   const [contentMarkdown, setContentMarkdown] = useState("");
   const [coverImage, setCoverImage] = useState("");
   const [images, setImages] = useState<string[]>([]);
-  const [newImageUrl, setNewImageUrl] = useState("");
+
   const [projectUrl, setProjectUrl] = useState("");
   const [githubUrl, setGithubUrl] = useState("");
   const [figmaUrl, setFigmaUrl] = useState("");
@@ -111,7 +119,7 @@ export default function AdminProjectsPage() {
 
   const resetForm = () => {
     setTitle(""); setSlug(""); setDescription(""); setContentMarkdown("");
-    setCoverImage(""); setImages([]); setNewImageUrl("");
+    setCoverImage(""); setImages([]);
     setProjectUrl(""); setGithubUrl(""); setFigmaUrl("");
     setCategory(""); setIsGalleryOnly(false);
     setStatus("Published"); setFeatured(false);
@@ -133,7 +141,6 @@ export default function AdminProjectsPage() {
     setContentMarkdown(project.contentMarkdown);
     setCoverImage(project.coverImage);
     setImages(project.images || []);
-    setNewImageUrl("");
     setProjectUrl(project.projectUrl || "");
     setGithubUrl(project.githubUrl || "");
     setFigmaUrl(project.figmaUrl || "");
@@ -156,55 +163,58 @@ export default function AdminProjectsPage() {
     }
   };
 
-  // Upload image to Drive
-  const handleImageUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-    field: "cover" | "gallery"
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
+  // Generic Base64 uploader helper
+  const handleUploadFile = async (file: File, subfolder: string): Promise<string> => {
     setIsUploading(true);
     const reader = new FileReader();
     reader.readAsDataURL(file);
-    reader.onload = async () => {
-      const base64Content = (reader.result as string).split(",")[1];
-      try {
-        const uploadRes = await mediaApi.upload(
-          {
-            filename: file.name,
-            mimeType: file.type,
-            base64Content,
-            subfolder: "projects/" + (field === "cover" ? "cover" : "gallery"),
-          },
-          user.token
-        );
-        if (uploadRes.success && uploadRes.data) {
-          if (field === "cover") {
-            setCoverImage(uploadRes.data.url);
+    return new Promise<string>((resolve, reject) => {
+      reader.onload = async () => {
+        const base64Content = (reader.result as string).split(",")[1];
+        try {
+          const uploadRes = await mediaApi.upload(
+            {
+              filename: file.name,
+              mimeType: file.type,
+              base64Content,
+              subfolder,
+            },
+            user!.token
+          );
+          if (uploadRes.success && uploadRes.data) {
+            resolve(uploadRes.data.url);
           } else {
-            setImages((prev) => [...prev, uploadRes.data!.url]);
+            reject(new Error("Gagal mengunggah gambar"));
           }
-          alert("File berhasil diunggah ke Google Drive!");
+        } catch (err) {
+          reject(err);
         }
-      } catch {
-        alert("Gagal mengunggah file ke Google Drive.");
-      } finally {
-        setIsUploading(false);
-      }
-    };
+      };
+      reader.onerror = () => reject(new Error("Gagal membaca file"));
+    }).finally(() => {
+      setIsUploading(false);
+    });
   };
 
-  const addImageUrl = () => {
-    const url = newImageUrl.trim();
-    if (url && !images.includes(url)) {
-      setImages((prev) => [...prev, url]);
-      setNewImageUrl("");
+  const handleCoverUpload = async (file: File) => {
+    try {
+      const url = await handleUploadFile(file, "projects/cover");
+      setCoverImage(url);
+    } catch {
+      alert("Gagal mengunggah cover image ke Google Drive.");
     }
   };
 
-  const removeImage = (url: string) => {
-    setImages((prev) => prev.filter((img) => img !== url));
+  const handleGalleryUpload = async (file: File) => {
+    try {
+      const url = await handleUploadFile(file, "projects/gallery");
+      setImages((prev) => [...prev, url]);
+    } catch {
+      alert("Gagal mengunggah gambar galeri ke Google Drive.");
+    }
   };
+
+
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -357,235 +367,166 @@ export default function AdminProjectsPage() {
       )}
 
       {/* Edit/Create Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-start justify-center p-4 overflow-y-auto">
-          <Card className="max-w-2xl w-full p-6 my-8" hoverEffect={false}>
-            <div className="flex justify-between items-center mb-5">
-              <h2 className="font-display text-h3 font-bold text-foreground">
-                {editingProject ? "Edit Proyek" : "Tambah Proyek Baru"}
-              </h2>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="p-1.5 rounded-md text-foreground-muted hover:text-foreground hover:bg-background-overlay transition-colors"
-              >
-                <X size={18} />
-              </button>
-            </div>
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={editingProject ? "Edit Proyek" : "Tambah Proyek Baru"}
+        maxWidth="max-w-2xl"
+        asForm
+        onSubmit={handleSave}
+        footer={
+          <>
+            <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
+              Batal
+            </Button>
+            <Button type="submit" disabled={isSaving || isUploading}>
+              {isSaving ? "Menyimpan..." : isUploading ? "Mengunggah..." : "Simpan Proyek"}
+            </Button>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-6">
+          {/* Title & Slug */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Judul Proyek *"
+              value={title}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                if (!editingProject) {
+                  setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, ""));
+                }
+              }}
+              required
+            />
+            <Input
+              label="Slug URL *"
+              value={slug}
+              onChange={(e) => setSlug(e.target.value)}
+              className="font-mono"
+              required
+            />
+          </div>
 
-            <form onSubmit={handleSave} className="flex flex-col gap-5">
-              {/* Title & Slug */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Judul Proyek *</label>
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => {
-                      setTitle(e.target.value);
-                      if (!editingProject) {
-                        setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, ""));
-                      }
-                    }}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs"
-                    required
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Slug URL *</label>
-                  <input
-                    type="text"
-                    value={slug}
-                    onChange={(e) => setSlug(e.target.value)}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs font-mono"
-                    required
-                  />
-                </div>
-              </div>
+          {/* Description */}
+          <Textarea
+            label="Deskripsi Singkat *"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            required
+            maxLength={300}
+            showCounter
+          />
 
-              {/* Description */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-foreground-muted">Deskripsi Singkat *</label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs h-16 resize-none"
-                  required
-                />
-              </div>
+          {/* Cover Image & Category */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+            <ImageUpload
+              label="Cover Image"
+              value={coverImage}
+              onChange={setCoverImage}
+              onRemove={() => setCoverImage("")}
+              isUploading={isUploading}
+              onUploadFile={handleCoverUpload}
+            />
+            <CategoryInput value={category} onChange={setCategory} suggestions={existingCategories} />
+          </div>
 
-              {/* Cover Image + Category */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Cover Image</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={coverImage}
-                      onChange={(e) => setCoverImage(e.target.value)}
-                      className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-xs"
-                      placeholder="https://..."
-                    />
-                    <label className="bg-background-overlay hover:bg-background-elevated border border-border px-3 py-2 rounded text-xs cursor-pointer flex items-center gap-1 font-semibold text-foreground" title="Upload ke Drive">
-                      <Upload size={12} />
-                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "cover")} disabled={isUploading} />
-                    </label>
-                  </div>
-                  {coverImage && (
-                    <img src={coverImage} alt="cover preview" className="mt-1 h-16 w-full object-cover rounded-md border border-border" />
-                  )}
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">
-                    Kategori *
-                    <span className="ml-1 text-[9px] text-foreground-subtle font-normal">(ketik untuk buat baru)</span>
-                  </label>
-                  <CategoryInput value={category} onChange={setCategory} suggestions={existingCategories} />
-                </div>
-              </div>
+          {/* Gallery Images */}
+          <GalleryUpload
+            label="Gambar Galeri Tambahan"
+            images={images}
+            onChange={setImages}
+            isUploading={isUploading}
+            onUploadFile={handleGalleryUpload}
+          />
 
-              {/* Gallery Images */}
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-semibold text-foreground-muted flex items-center gap-1">
-                  <ImageIcon size={12} /> Gambar Galeri Tambahan
-                </label>
-                {images.length > 0 && (
-                  <div className="flex flex-wrap gap-2 p-2 bg-background-overlay rounded-md border border-border">
-                    {images.map((img, i) => (
-                      <div key={i} className="relative group">
-                        <img src={img} alt={`gallery-${i}`} className="h-14 w-14 object-cover rounded border border-border" />
-                        <button
-                          type="button"
-                          onClick={() => removeImage(img)}
-                          className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-error text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <X size={10} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newImageUrl}
-                    onChange={(e) => setNewImageUrl(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addImageUrl(); } }}
-                    className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-xs"
-                    placeholder="Tempel URL gambar lalu tekan Enter atau klik +"
-                  />
-                  <button
-                    type="button"
-                    onClick={addImageUrl}
-                    className="px-3 py-2 bg-background-overlay border border-border rounded text-xs font-semibold hover:bg-background-elevated transition-colors"
-                  >
-                    +
-                  </button>
-                  <label className="bg-background-overlay hover:bg-background-elevated border border-border px-3 py-2 rounded text-xs cursor-pointer flex items-center gap-1 font-semibold text-foreground" title="Upload ke Drive">
-                    <Upload size={12} />
-                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "gallery")} disabled={isUploading} />
-                  </label>
-                </div>
-              </div>
+          {/* Tech Stack */}
+          <Input
+            label="Tech Stack (Pisahkan dengan koma)"
+            value={techInput}
+            onChange={(e) => setTechInput(e.target.value)}
+            placeholder="Next.js, TypeScript, TailwindCSS"
+          />
 
-              {/* Tech Stack */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-foreground-muted">Tech Stack (Pisahkan dengan koma)</label>
+          {/* Project Links */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <Input
+              label="Live URL"
+              value={projectUrl}
+              onChange={(e) => setProjectUrl(e.target.value)}
+              placeholder="https://..."
+            />
+            <Input
+              label="GitHub URL"
+              value={githubUrl}
+              onChange={(e) => setGithubUrl(e.target.value)}
+              placeholder="https://github.com/..."
+            />
+            <Input
+              label="Figma URL"
+              value={figmaUrl}
+              onChange={(e) => setFigmaUrl(e.target.value)}
+              placeholder="https://figma.com/..."
+            />
+          </div>
+
+          {/* Studi Kasus / Markdown Content */}
+          <Textarea
+            label="Studi Kasus (Markdown — Opsional)"
+            value={contentMarkdown}
+            onChange={(e) => setContentMarkdown(e.target.value)}
+            placeholder="# Tentang Proyek Ini..."
+            className="font-mono"
+            rows={6}
+          />
+
+          {/* Flags & Meta */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-5 bg-background-overlay/60 rounded-xl border border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)]">
+            <div className="flex flex-col gap-3">
+              <label className="flex items-center gap-2.5 text-xs font-semibold text-foreground cursor-pointer select-none">
                 <input
-                  type="text"
-                  value={techInput}
-                  onChange={(e) => setTechInput(e.target.value)}
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs"
-                  placeholder="Next.js, TypeScript, TailwindCSS"
+                  type="checkbox"
+                  checked={isGalleryOnly}
+                  onChange={(e) => setIsGalleryOnly(e.target.checked)}
+                  className="rounded border-zinc-300 dark:border-zinc-700 accent-accent"
                 />
-              </div>
-
-              {/* Project Links */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted flex items-center gap-1"><ExternalLink size={11} /> Live URL</label>
-                  <input type="text" value={projectUrl} onChange={(e) => setProjectUrl(e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" placeholder="https://..." />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted flex items-center gap-1"><Github size={11} /> GitHub URL</label>
-                  <input type="text" value={githubUrl} onChange={(e) => setGithubUrl(e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" placeholder="https://github.com/..." />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted flex items-center gap-1"><Figma size={11} /> Figma URL</label>
-                  <input type="text" value={figmaUrl} onChange={(e) => setFigmaUrl(e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" placeholder="https://figma.com/..." />
-                </div>
-              </div>
-
-              {/* Studi Kasus / Markdown Content */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-foreground-muted">Studi Kasus (Markdown — Opsional)</label>
-                <textarea
-                  value={contentMarkdown}
-                  onChange={(e) => setContentMarkdown(e.target.value)}
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs h-28 font-mono resize-none"
-                  placeholder="# Tentang Proyek Ini..."
+                <span>Gallery Only <span className="font-normal text-foreground-muted block text-[10px] mt-0.5">Tampil hanya sebagai galeri visual, tanpa halaman detail</span></span>
+              </label>
+              <label className="flex items-center gap-2.5 text-xs font-semibold text-foreground cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={featured}
+                  onChange={(e) => setFeatured(e.target.checked)}
+                  className="rounded border-zinc-300 dark:border-zinc-700 accent-accent"
                 />
+                <span>Featured? <span className="font-normal text-foreground-muted block text-[10px] mt-0.5">Tampil di halaman utama</span></span>
+              </label>
+            </div>
+            <div className="flex flex-col gap-3">
+              <span className="text-xs font-semibold text-foreground-muted select-none">Urutan & Status</span>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  min="1"
+                  value={order}
+                  onChange={(e) => setOrder(Number(e.target.value))}
+                  className="w-1/3 rounded-lg border border-[rgba(0,0,0,0.15)] dark:border-[rgba(255,255,255,0.15)] bg-background px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent"
+                  title="Urutan tampil"
+                />
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as "Published" | "Draft" | "Archived")}
+                  className="w-2/3 rounded-lg border border-[rgba(0,0,0,0.15)] dark:border-[rgba(255,255,255,0.15)] bg-background px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent"
+                >
+                  <option value="Published">Published</option>
+                  <option value="Draft">Draft</option>
+                  <option value="Archived">Archived</option>
+                </select>
               </div>
-
-              {/* Flags & Meta */}
-              <div className="grid grid-cols-2 gap-4 p-4 bg-background-overlay rounded-lg border border-border">
-                <div className="flex flex-col gap-3">
-                  <label className="flex items-center gap-2 text-xs font-semibold text-foreground cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={isGalleryOnly}
-                      onChange={(e) => setIsGalleryOnly(e.target.checked)}
-                      className="rounded"
-                    />
-                    <span>Gallery Only <span className="font-normal text-foreground-muted">(tampil hanya sebagai galeri visual, tanpa halaman detail)</span></span>
-                  </label>
-                  <label className="flex items-center gap-2 text-xs font-semibold text-foreground cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={featured}
-                      onChange={(e) => setFeatured(e.target.checked)}
-                      className="rounded"
-                    />
-                    <span>Featured? <span className="font-normal text-foreground-muted">(tampil di halaman utama)</span></span>
-                  </label>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-semibold text-foreground-muted">Urutan & Status</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="number"
-                      min="1"
-                      value={order}
-                      onChange={(e) => setOrder(Number(e.target.value))}
-                      className="w-1/3 rounded-md border border-border bg-background px-3 py-2 text-xs"
-                      title="Urutan tampil"
-                    />
-                    <select
-                      value={status}
-                      onChange={(e) => setStatus(e.target.value as "Published" | "Draft" | "Archived")}
-                      className="w-2/3 rounded-md border border-border bg-background px-3 py-2 text-xs"
-                    >
-                      <option value="Published">Published</option>
-                      <option value="Draft">Draft</option>
-                      <option value="Archived">Archived</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-3 justify-end pt-2 border-t border-border">
-                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
-                  Batal
-                </Button>
-                <Button type="submit" variant="primary" disabled={isSaving || isUploading}>
-                  {isSaving ? "Menyimpan..." : isUploading ? "Mengunggah..." : "Simpan Proyek"}
-                </Button>
-              </div>
-            </form>
-          </Card>
+            </div>
+          </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

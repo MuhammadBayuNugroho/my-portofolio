@@ -6,7 +6,10 @@ import { blogsApi, mediaApi } from "@/lib/api";
 import type { Blog } from "@/types";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Plus, Edit2, Trash2, Loader2, Upload } from "lucide-react";
+import { Modal, Input, Textarea } from "@/components/ui";
+import { ImageUpload } from "@/components/admin/ImageUpload";
+import { Plus, Edit2, Trash2, Loader2 } from "lucide-react";
+
 
 // ─── Flexible Category Input ────────────────────────────────────
 function CategoryInput({
@@ -23,27 +26,32 @@ function CategoryInput({
     (s) => s.toLowerCase().includes(value.toLowerCase()) && s !== value
   );
   return (
-    <div className="relative">
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => { onChange(e.target.value); setOpen(true); }}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setTimeout(() => setOpen(false), 150)}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs focus-visible:outline-2 focus-visible:outline-accent"
-        placeholder="Contoh: Tech, Design, Tutorial..."
-        required
-      />
-      {open && filtered.length > 0 && (
-        <div className="absolute top-full left-0 right-0 z-20 mt-1 rounded-md border border-border bg-background-elevated shadow-lg overflow-hidden">
-          {filtered.map((s) => (
-            <button key={s} type="button" onMouseDown={() => { onChange(s); setOpen(false); }}
-              className="w-full text-left px-3 py-2 text-xs hover:bg-background-overlay text-foreground-muted hover:text-foreground transition-colors">
-              {s}
-            </button>
-          ))}
-        </div>
-      )}
+    <div className="relative flex flex-col gap-1.5">
+      <label className="text-xs font-semibold text-foreground-muted select-none">
+        Kategori * <span className="text-[10px] text-foreground-subtle font-normal">(ketik untuk baru)</span>
+      </label>
+      <div className="relative">
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => { onChange(e.target.value); setOpen(true); }}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setTimeout(() => setOpen(false), 200)}
+          className="w-full rounded-lg border border-[rgba(0,0,0,0.15)] dark:border-[rgba(255,255,255,0.15)] bg-background px-3.5 py-2.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent"
+          placeholder="Contoh: Tech, Design, Tutorial..."
+          required
+        />
+        {open && filtered.length > 0 && (
+          <div className="absolute top-full left-0 right-0 z-30 mt-1 rounded-xl border border-[rgba(0,0,0,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#111827] shadow-[0_10px_30px_rgba(0,0,0,0.15)] overflow-hidden">
+            {filtered.map((s) => (
+              <button key={s} type="button" onMouseDown={() => { onChange(s); setOpen(false); }}
+                className="w-full text-left px-3.5 py-2.5 text-xs hover:bg-background-overlay text-foreground-muted hover:text-foreground transition-colors cursor-pointer">
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -138,10 +146,7 @@ export default function AdminBlogPage() {
     }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
-
+  const handleCoverUpload = async (file: File) => {
     setIsUploading(true);
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -155,14 +160,13 @@ export default function AdminBlogPage() {
             base64Content,
             subfolder: "blog",
           },
-          user.token
+          user!.token
         );
 
         if (uploadRes.success && uploadRes.data) {
           setCoverImage(uploadRes.data.url);
-          alert("File berhasil diunggah ke Google Drive!");
         }
-      } catch (err) {
+      } catch {
         alert("Gagal mengunggah file ke Google Drive.");
       } finally {
         setIsUploading(false);
@@ -266,133 +270,139 @@ export default function AdminBlogPage() {
       )}
 
       {/* Edit/Create Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <Card className="max-w-2xl w-full p-6 my-8" hoverEffect={false}>
-            <h2 className="font-display text-h3 font-bold text-foreground mb-4">
-              {editingBlog ? "Edit Artikel" : "Tambah Artikel Baru"}
-            </h2>
-            <form onSubmit={handleSave} className="flex flex-col gap-4 max-h-[80vh] overflow-y-auto pr-2">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Judul Artikel</label>
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => {
-                      setTitle(e.target.value);
-                      if (!editingBlog) {
-                        setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, ""));
-                      }
-                    }}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs"
-                    required
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Slug URL</label>
-                  <input
-                    type="text"
-                    value={slug}
-                    onChange={(e) => setSlug(e.target.value)}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs"
-                    required
-                  />
-                </div>
-              </div>
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={editingBlog ? "Edit Artikel" : "Tambah Artikel Baru"}
+        maxWidth="max-w-2xl"
+        asForm
+        onSubmit={handleSave}
+        footer={
+          <>
+            <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
+              Batal
+            </Button>
+            <Button type="submit" disabled={isSaving || isUploading}>
+              {isSaving ? "Menyimpan..." : "Simpan"}
+            </Button>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-6">
+          {/* Title & Slug */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Judul Artikel *"
+              value={title}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                if (!editingBlog) {
+                  setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, ""));
+                }
+              }}
+              required
+            />
+            <Input
+              label="Slug URL *"
+              value={slug}
+              onChange={(e) => setSlug(e.target.value)}
+              className="font-mono"
+              required
+            />
+          </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-foreground-muted">Kutipan Singkat (Excerpt)</label>
-                <textarea
-                  value={excerpt}
-                  onChange={(e) => setExcerpt(e.target.value)}
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs h-16"
-                  required
+          {/* Excerpt */}
+          <Textarea
+            label="Kutipan Singkat (Excerpt) *"
+            value={excerpt}
+            onChange={(e) => setExcerpt(e.target.value)}
+            required
+            maxLength={180}
+            showCounter
+          />
+
+          {/* Content Markdown */}
+          <Textarea
+            label="Konten Lengkap (Markdown) *"
+            value={contentMarkdown}
+            onChange={(e) => setContentMarkdown(e.target.value)}
+            placeholder="# Mulai menulis..."
+            className="font-mono"
+            rows={10}
+            required
+          />
+
+          {/* Cover & Category */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+            <ImageUpload
+              label="Cover Image"
+              value={coverImage}
+              onChange={setCoverImage}
+              onRemove={() => setCoverImage("")}
+              isUploading={isUploading}
+              onUploadFile={handleCoverUpload}
+            />
+            <CategoryInput value={category} onChange={setCategory} suggestions={existingCategories} />
+          </div>
+
+          {/* Tags & Status */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Tags (Pisahkan dengan koma)"
+              value={tagsInput}
+              onChange={(e) => setTagsInput(e.target.value)}
+              placeholder="Next.js, Frontend, CSS"
+            />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-foreground-muted select-none">Status</label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as "Published" | "Draft" | "Archived")}
+                className="w-full rounded-lg border border-[rgba(0,0,0,0.15)] dark:border-[rgba(255,255,255,0.15)] bg-background px-3 py-2.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent"
+              >
+                <option value="Published">Published</option>
+                <option value="Draft">Draft</option>
+                <option value="Archived">Archived</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Featured & Reading Time/Order */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-5 bg-background-overlay/60 rounded-xl border border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)]">
+            <label className="flex items-center gap-2.5 text-xs font-semibold text-foreground cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={featured}
+                onChange={(e) => setFeatured(e.target.checked)}
+                className="rounded border-zinc-300 dark:border-zinc-700 accent-accent"
+              />
+              <span>Featured Article? <span className="font-normal text-foreground-muted block text-[10px] mt-0.5">Tampil di jajaran artikel utama</span></span>
+            </label>
+
+            <div className="flex flex-col gap-3">
+              <span className="text-xs font-semibold text-foreground-muted select-none">Waktu Baca & Urutan</span>
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  min="1"
+                  value={readingTime}
+                  onChange={(e) => setReadingTime(Number(e.target.value))}
+                  helperText="Menit"
+                  wrapperClassName="flex-1"
+                />
+                <Input
+                  type="number"
+                  value={order}
+                  onChange={(e) => setOrder(Number(e.target.value))}
+                  placeholder="Urutan"
+                  helperText="Urutan Tampil"
+                  wrapperClassName="flex-1"
                 />
               </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-foreground-muted">Konten Lengkap (Markdown)</label>
-                <textarea
-                  value={contentMarkdown}
-                  onChange={(e) => setContentMarkdown(e.target.value)}
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs h-40 font-mono"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Cover Image URL (Direct Link)</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={coverImage}
-                      onChange={(e) => setCoverImage(e.target.value)}
-                      className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-xs"
-                    />
-                    <label className="bg-background-overlay hover:bg-background-elevated border border-border px-3 py-2 rounded text-xs cursor-pointer flex items-center gap-1 font-semibold text-foreground">
-                      <Upload size={12} />
-                      <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isUploading} />
-                    </label>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">
-                    Kategori
-                    <span className="ml-1 text-[9px] text-foreground-subtle font-normal">(ketik untuk buat baru)</span>
-                  </label>
-                  <CategoryInput value={category} onChange={setCategory} suggestions={existingCategories} />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Tags (Pisahkan dengan koma)</label>
-                  <input
-                    type="text"
-                    value={tagsInput}
-                    onChange={(e) => setTagsInput(e.target.value)}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs"
-                    placeholder="Next.js, Frontend, CSS"
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Status</label>
-                  <select value={status} onChange={(e) => setStatus(e.target.value as "Published" | "Draft" | "Archived")} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs">
-                    <option value="Published">Published</option>
-                    <option value="Draft">Draft</option>
-                    <option value="Archived">Archived</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-4 gap-4 items-center mt-2">
-                <label className="flex items-center gap-2 text-xs font-semibold text-foreground cursor-pointer">
-                  <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} className="rounded" />
-                  <span>Featured Article?</span>
-                </label>
-                <div className="flex flex-col gap-1.5 col-span-3">
-                  <label className="text-xs font-semibold text-foreground-muted">Waktu Baca & Urutan (Menit & Urutan Bebas)</label>
-                  <div className="flex gap-2">
-                    <input type="number" min="1" value={readingTime} onChange={(e) => setReadingTime(Number(e.target.value))} className="w-1/2 rounded-md border border-border bg-background px-3 py-2 text-xs" />
-                    <input type="number" value={order} onChange={(e) => setOrder(Number(e.target.value))} className="w-1/2 rounded-md border border-border bg-background px-3 py-2 text-xs" placeholder="Urutan (opsional)" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-3 justify-end mt-6">
-                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
-                  Batal
-                </Button>
-                <Button type="submit" variant="primary" disabled={isSaving || isUploading}>
-                  {isSaving ? "Menyimpan..." : "Simpan"}
-                </Button>
-              </div>
-            </form>
-          </Card>
+            </div>
+          </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

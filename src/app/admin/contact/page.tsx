@@ -7,7 +7,8 @@ import { contactApi } from "@/lib/api";
 import type { ContactMessage } from "@/types";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Mail, MailOpen, Trash2, Loader2, Plus, X, AlertCircle, RefreshCw } from "lucide-react";
+import { Modal, Input, Textarea } from "@/components/ui";
+import { Mail, MailOpen, Trash2, Loader2, Plus, AlertCircle, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type FilterKey = "all" | "unread" | "read";
@@ -218,124 +219,143 @@ export default function AdminContactPage() {
       )}
 
       {/* View Message Detail Modal */}
-      {viewMsg && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <Card className="max-w-lg w-full p-6" hoverEffect={false}>
-            <div className="flex justify-between items-start mb-5">
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="font-display text-h3 font-bold text-foreground">{viewMsg.senderName}</h2>
-                  {viewMsg.isRead && <MailOpen size={14} className="text-foreground-muted" />}
-                </div>
-                <p className="text-xs text-foreground-subtle">{viewMsg.senderEmail}</p>
-                <p className="text-[10px] text-foreground-subtle mt-0.5">
-                  {new Date(viewMsg.createdAt).toLocaleString("id-ID")}
-                </p>
+      <Modal
+        isOpen={!!viewMsg}
+        onClose={() => setViewMsg(null)}
+        title={
+          viewMsg ? (
+            <div className="flex flex-col gap-0.5">
+              <div className="flex items-center gap-2">
+                <span className="font-display text-h3 font-bold text-foreground">{viewMsg.senderName}</span>
+                {viewMsg.isRead && <MailOpen size={14} className="text-foreground-muted" />}
               </div>
-              <button onClick={() => setViewMsg(null)} className="text-foreground-muted hover:text-foreground p-1 transition-colors">
-                <X size={18} />
-              </button>
+              <span className="text-[10px] font-normal text-foreground-subtle">
+                {viewMsg.senderEmail} • {new Date(viewMsg.createdAt).toLocaleString("id-ID")}
+              </span>
             </div>
-
-            <div className="border-t border-border/60 pt-4 mb-4">
-              <p className="text-xs font-semibold text-foreground-muted mb-1">Subjek</p>
-              <p className="text-sm font-bold text-foreground">{viewMsg.subject || "(Tanpa Subjek)"}</p>
-            </div>
-
-            <div className="mb-5">
-              <p className="text-xs font-semibold text-foreground-muted mb-2">Pesan</p>
-              <p className="text-xs text-foreground-muted leading-relaxed whitespace-pre-wrap bg-background-overlay p-4 rounded-md">
-                {viewMsg.message}
-              </p>
-            </div>
-
-            <div className="flex gap-3 justify-end">
+          ) : ""
+        }
+        maxWidth="max-w-lg"
+        footer={
+          viewMsg ? (
+            <>
               <Button
                 variant="outline"
                 onClick={() => { setDeleteId(viewMsg.id); setViewMsg(null); }}
-                className="gap-2 text-error border-error/30 hover:bg-error/10"
+                className="gap-2 text-error border-error/20 hover:border-error hover:bg-error/10 hover:text-error animate-pulse-subtle"
               >
                 <Trash2 size={14} /> Hapus
               </Button>
               <a
                 href={`mailto:${viewMsg.senderEmail}?subject=Re: ${encodeURIComponent(viewMsg.subject || "")}`}
-                className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-md bg-accent text-accent-foreground hover:bg-accent-hover transition-colors"
+                className="inline-flex items-center gap-2 px-4.5 py-2.5 text-xs font-semibold rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 transition-colors cursor-pointer"
               >
                 <Mail size={14} /> Balas via Email
               </a>
+            </>
+          ) : null
+        }
+      >
+        {viewMsg && (
+          <div className="flex flex-col gap-4">
+            <div>
+              <p className="text-[10px] font-bold text-foreground-muted uppercase tracking-wider mb-1">Subjek</p>
+              <p className="text-sm font-bold text-foreground bg-background-overlay/40 px-3.5 py-2.5 rounded-lg border border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)]">
+                {viewMsg.subject || "(Tanpa Subjek)"}
+              </p>
             </div>
-          </Card>
-        </div>
-      )}
+
+            <div>
+              <p className="text-[10px] font-bold text-foreground-muted uppercase tracking-wider mb-2">Pesan</p>
+              <p className="text-xs text-foreground-muted leading-relaxed whitespace-pre-wrap bg-background-overlay p-4 rounded-xl border border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)]">
+                {viewMsg.message}
+              </p>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {/* Compose Modal */}
-      {isComposeOpen && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <Card className="max-w-lg w-full p-6" hoverEffect={false}>
-            <div className="flex justify-between items-center mb-5">
-              <h2 className="font-display text-h3 font-bold text-foreground">Tulis Pesan Baru</h2>
-              <button onClick={() => setIsComposeOpen(false)} className="text-foreground-muted hover:text-foreground p-1 transition-colors">
-                <X size={18} />
-              </button>
-            </div>
-            <form onSubmit={handleCompose} className="flex flex-col gap-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Nama Pengirim</label>
-                  <input type="text" value={cName} onChange={(e) => setCName(e.target.value)}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" required />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Email Pengirim</label>
-                  <input type="email" value={cEmail} onChange={(e) => setCEmail(e.target.value)}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" required />
-                </div>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-foreground-muted">Subjek</label>
-                <input type="text" value={cSubject} onChange={(e) => setCSubject(e.target.value)}
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" placeholder="(Opsional)" />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-foreground-muted">Pesan</label>
-                <textarea value={cMessage} onChange={(e) => setCMessage(e.target.value)}
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs h-24 resize-none" required />
-              </div>
-              <div className="flex gap-3 justify-end">
-                <Button type="button" variant="outline" onClick={() => setIsComposeOpen(false)}>Batal</Button>
-                <Button type="submit" variant="primary" disabled={isSending}>
-                  {isSending ? "Mengirim..." : "Kirim Pesan"}
-                </Button>
-              </div>
-            </form>
-          </Card>
+      <Modal
+        isOpen={isComposeOpen}
+        onClose={() => setIsComposeOpen(false)}
+        title="Tulis Pesan Baru"
+        maxWidth="max-w-lg"
+        asForm
+        onSubmit={handleCompose}
+        footer={
+          <>
+            <Button type="button" variant="outline" onClick={() => setIsComposeOpen(false)}>
+              Batal
+            </Button>
+            <Button type="submit" disabled={isSending}>
+              {isSending ? "Mengirim..." : "Kirim Pesan"}
+            </Button>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Nama Pengirim *"
+              value={cName}
+              onChange={(e) => setCName(e.target.value)}
+              required
+            />
+            <Input
+              type="email"
+              label="Email Pengirim *"
+              value={cEmail}
+              onChange={(e) => setCEmail(e.target.value)}
+              required
+            />
+          </div>
+          <Input
+            label="Subjek"
+            value={cSubject}
+            onChange={(e) => setCSubject(e.target.value)}
+            placeholder="(Opsional)"
+          />
+          <Textarea
+            label="Pesan *"
+            value={cMessage}
+            onChange={(e) => setCMessage(e.target.value)}
+            required
+            rows={4}
+          />
         </div>
-      )}
+      </Modal>
 
       {/* Delete Confirm Modal */}
-      {deleteId && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <Card className="max-w-sm w-full p-6 text-center" hoverEffect={false}>
-            <div className="h-12 w-12 rounded-full bg-error/10 flex items-center justify-center mx-auto mb-4">
-              <AlertCircle size={24} className="text-error" />
-            </div>
-            <h3 className="font-display text-h3 font-bold text-foreground mb-2">Hapus Pesan?</h3>
-            <p className="text-xs text-foreground-muted mb-6">
-              Pesan akan dihapus permanen dari database dan tidak bisa dikembalikan.
-            </p>
-            <div className="flex gap-3 justify-center">
-              <Button variant="outline" onClick={() => setDeleteId(null)}>Batal</Button>
-              <Button
-                variant="primary"
-                onClick={() => handleDelete(deleteId)}
-                className="bg-error hover:bg-error/90 text-white border-transparent"
-              >
-                Ya, Hapus
-              </Button>
-            </div>
-          </Card>
+      <Modal
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        title="Hapus Pesan?"
+        maxWidth="max-w-sm"
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setDeleteId(null)}>
+              Batal
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => deleteId && handleDelete(deleteId)}
+              className="bg-error hover:bg-error/90 text-white border-transparent"
+            >
+              Ya, Hapus
+            </Button>
+          </>
+        }
+      >
+        <div className="text-center py-4">
+          <div className="h-12 w-12 rounded-full bg-error/10 flex items-center justify-center mx-auto mb-4 text-error">
+            <AlertCircle size={24} />
+          </div>
+          <p className="text-xs text-foreground-muted leading-relaxed">
+            Pesan akan dihapus secara permanen dari database dan tidak bisa dikembalikan.
+          </p>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

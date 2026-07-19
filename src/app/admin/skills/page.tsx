@@ -6,7 +6,9 @@ import { skillsApi } from "@/lib/api";
 import type { Skill, SkillLevel } from "@/types";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { Modal, Input } from "@/components/ui";
 import { Plus, Edit2, Trash2, Loader2 } from "lucide-react";
+
 
 // ─── Flexible Category Input ────────────────────────────────────
 function CategoryInput({
@@ -23,27 +25,32 @@ function CategoryInput({
     (s) => s.toLowerCase().includes(value.toLowerCase()) && s !== value
   );
   return (
-    <div className="relative">
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => { onChange(e.target.value); setOpen(true); }}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setTimeout(() => setOpen(false), 150)}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs focus-visible:outline-2 focus-visible:outline-accent"
-        placeholder="Contoh: Frontend, Design, Tools..."
-        required
-      />
-      {open && filtered.length > 0 && (
-        <div className="absolute top-full left-0 right-0 z-20 mt-1 rounded-md border border-border bg-background-elevated shadow-lg overflow-hidden">
-          {filtered.map((s) => (
-            <button key={s} type="button" onMouseDown={() => { onChange(s); setOpen(false); }}
-              className="w-full text-left px-3 py-2 text-xs hover:bg-background-overlay text-foreground-muted hover:text-foreground transition-colors">
-              {s}
-            </button>
-          ))}
-        </div>
-      )}
+    <div className="relative flex flex-col gap-1.5">
+      <label className="text-xs font-semibold text-foreground-muted select-none">
+        Kategori * <span className="text-[10px] text-foreground-subtle font-normal">(ketik untuk baru)</span>
+      </label>
+      <div className="relative">
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => { onChange(e.target.value); setOpen(true); }}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setTimeout(() => setOpen(false), 200)}
+          className="w-full rounded-lg border border-[rgba(0,0,0,0.15)] dark:border-[rgba(255,255,255,0.15)] bg-background px-3.5 py-2.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent"
+          placeholder="Contoh: Frontend, Design, Tools..."
+          required
+        />
+        {open && filtered.length > 0 && (
+          <div className="absolute top-full left-0 right-0 z-30 mt-1 rounded-xl border border-[rgba(0,0,0,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#111827] shadow-[0_10px_30px_rgba(0,0,0,0.15)] overflow-hidden">
+            {filtered.map((s) => (
+              <button key={s} type="button" onMouseDown={() => { onChange(s); setOpen(false); }}
+                className="w-full text-left px-3.5 py-2.5 text-xs hover:bg-background-overlay text-foreground-muted hover:text-foreground transition-colors cursor-pointer">
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -184,62 +191,74 @@ export default function AdminSkillsPage() {
         </div>
       )}
 
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <Card className="max-w-md w-full p-6" hoverEffect={false}>
-            <h2 className="font-display text-h3 font-bold text-foreground mb-5">
-              {editingSkill ? "Edit Keahlian" : "Tambah Keahlian Baru"}
-            </h2>
-            <form onSubmit={handleSave} className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-foreground-muted">Nama Skill</label>
-                <input type="text" value={name} onChange={(e) => setName(e.target.value)}
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs"
-                  placeholder="Next.js, Photoshop, dll." required />
-              </div>
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={editingSkill ? "Edit Keahlian" : "Tambah Keahlian Baru"}
+        maxWidth="max-w-md"
+        asForm
+        onSubmit={handleSave}
+        footer={
+          <>
+            <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
+              Batal
+            </Button>
+            <Button type="submit" disabled={isSaving}>
+              {isSaving ? "Menyimpan..." : "Simpan"}
+            </Button>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-5">
+          <Input
+            label="Nama Skill *"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Next.js, Photoshop, dll."
+            required
+          />
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-foreground-muted">
-                  Kategori
-                  <span className="ml-1 text-[9px] text-foreground-subtle font-normal">(ketik untuk membuat kategori baru)</span>
-                </label>
-                <CategoryInput value={category} onChange={setCategory} suggestions={existingCategories} />
-              </div>
+          <CategoryInput
+            value={category}
+            onChange={setCategory}
+            suggestions={existingCategories}
+          />
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Level</label>
-                  <select value={level} onChange={(e) => setLevel(e.target.value as SkillLevel)}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs">
-                    <option value="Beginner">Beginner</option>
-                    <option value="Intermediate">Intermediate</option>
-                    <option value="Advanced">Advanced</option>
-                    <option value="Expert">Expert</option>
-                  </select>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Kemahiran (%)</label>
-                  <input type="number" min="0" max="100" value={percentage} onChange={(e) => setPercentage(Number(e.target.value))}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" required />
-                </div>
-              </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-foreground-muted select-none">Level</label>
+              <select
+                value={level}
+                onChange={(e) => setLevel(e.target.value as any)}
+                className="w-full rounded-lg border border-[rgba(0,0,0,0.15)] dark:border-[rgba(255,255,255,0.15)] bg-background px-3 py-2.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent"
+              >
+                <option value="Beginner">Beginner</option>
+                <option value="Intermediate">Intermediate</option>
+                <option value="Advanced">Advanced</option>
+                <option value="Expert">Expert</option>
+              </select>
+            </div>
+            <Input
+              type="number"
+              min="0"
+              max="100"
+              label="Kemahiran (%) *"
+              value={percentage}
+              onChange={(e) => setPercentage(Number(e.target.value))}
+              required
+            />
+          </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-foreground-muted">Urutan Tampil</label>
-                <input type="number" min="1" value={order} onChange={(e) => setOrder(Number(e.target.value))}
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" required />
-              </div>
-
-              <div className="flex gap-3 justify-end mt-2">
-                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>Batal</Button>
-                <Button type="submit" variant="primary" disabled={isSaving}>
-                  {isSaving ? "Menyimpan..." : "Simpan"}
-                </Button>
-              </div>
-            </form>
-          </Card>
+          <Input
+            type="number"
+            min="1"
+            label="Urutan Tampil *"
+            value={order}
+            onChange={(e) => setOrder(Number(e.target.value))}
+            required
+          />
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

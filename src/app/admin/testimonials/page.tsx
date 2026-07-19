@@ -6,7 +6,10 @@ import { testimonialsApi, mediaApi } from "@/lib/api";
 import type { Testimonial, TestimonialRelation } from "@/types";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Plus, Edit2, Trash2, Loader2, Upload } from "lucide-react";
+import { Modal, Input, Textarea } from "@/components/ui";
+import { ImageUpload } from "@/components/admin/ImageUpload";
+import { Plus, Edit2, Trash2, Loader2 } from "lucide-react";
+
 
 export default function AdminTestimonialsPage() {
   const { user } = useAuth();
@@ -91,10 +94,7 @@ export default function AdminTestimonialsPage() {
     }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
-
+  const handleCoverUpload = async (file: File) => {
     setIsUploading(true);
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -108,14 +108,13 @@ export default function AdminTestimonialsPage() {
             base64Content,
             subfolder: "testimonials",
           },
-          user.token
+          user!.token
         );
 
         if (uploadRes.success && uploadRes.data) {
           setAuthorImageUrl(uploadRes.data.url);
-          alert("Avatar berhasil diunggah ke Google Drive!");
         }
-      } catch (err) {
+      } catch {
         alert("Gagal mengunggah avatar ke Google Drive.");
       } finally {
         setIsUploading(false);
@@ -217,94 +216,124 @@ export default function AdminTestimonialsPage() {
       )}
 
       {/* Edit/Create Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <Card className="max-w-md w-full p-6" hoverEffect={false}>
-            <h2 className="font-display text-h3 font-bold text-foreground mb-4">
-              {editingTesti ? "Edit Testimoni" : "Tambah Testimoni Baru"}
-            </h2>
-            <form onSubmit={handleSave} className="flex flex-col gap-4 max-h-[80vh] overflow-y-auto pr-2">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Nama Pengarang</label>
-                  <input type="text" value={authorName} onChange={(e) => setAuthorName(e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" required />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Jabatan (Role)</label>
-                  <input type="text" value={authorRole} onChange={(e) => setAuthorRole(e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" required />
-                </div>
-              </div>
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={editingTesti ? "Edit Testimoni" : "Tambah Testimoni Baru"}
+        maxWidth="max-w-md"
+        asForm
+        onSubmit={handleSave}
+        footer={
+          <>
+            <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
+              Batal
+            </Button>
+            <Button type="submit" disabled={isSaving || isUploading}>
+              {isSaving ? "Menyimpan..." : "Simpan"}
+            </Button>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Nama Pengarang *"
+              value={authorName}
+              onChange={(e) => setAuthorName(e.target.value)}
+              required
+            />
+            <Input
+              label="Jabatan (Role) *"
+              value={authorRole}
+              onChange={(e) => setAuthorRole(e.target.value)}
+              required
+            />
+          </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Organisasi/Perusahaan</label>
-                  <input type="text" value={authorOrganization} onChange={(e) => setAuthorOrganization(e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" required />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Hubungan</label>
-                  <select value={relation} onChange={(e) => setRelation(e.target.value as TestimonialRelation)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs">
-                    <option value="Client">Client</option>
-                    <option value="Colleague">Colleague</option>
-                    <option value="Mentor">Mentor</option>
-                    <option value="Supervisee">Supervisee</option>
-                    <option value="Partner">Partner</option>
-                  </select>
-                </div>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Organisasi/Perusahaan *"
+              value={authorOrganization}
+              onChange={(e) => setAuthorOrganization(e.target.value)}
+              required
+            />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-foreground-muted select-none">Hubungan</label>
+              <select
+                value={relation}
+                onChange={(e) => setRelation(e.target.value as TestimonialRelation)}
+                className="w-full rounded-lg border border-[rgba(0,0,0,0.15)] dark:border-[rgba(255,255,255,0.15)] bg-background px-3 py-2.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent"
+              >
+                <option value="Client">Client</option>
+                <option value="Colleague">Colleague</option>
+                <option value="Mentor">Mentor</option>
+                <option value="Supervisee">Supervisee</option>
+                <option value="Partner">Partner</option>
+              </select>
+            </div>
+          </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-foreground-muted">Foto Avatar (Google Drive)</label>
-                <div className="flex gap-2">
-                  <input type="text" value={authorImageUrl} onChange={(e) => setAuthorImageUrl(e.target.value)} className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-xs" placeholder="https://lh3.googleusercontent.com/..." />
-                  <label className="bg-background-overlay hover:bg-background-elevated border border-border px-3 py-2 rounded text-xs cursor-pointer flex items-center gap-1 font-semibold text-foreground">
-                    <Upload size={12} />
-                    <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isUploading} />
-                  </label>
-                </div>
-              </div>
+          <ImageUpload
+            label="Foto Avatar"
+            value={authorImageUrl}
+            onChange={setAuthorImageUrl}
+            onRemove={() => setAuthorImageUrl("")}
+            isUploading={isUploading}
+            onUploadFile={handleCoverUpload}
+          />
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-foreground-muted">Isi Testimoni</label>
-                <textarea value={content} onChange={(e) => setContent(e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs h-20" required />
-              </div>
+          <Textarea
+            label="Isi Testimoni *"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            required
+            rows={3}
+          />
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground-muted">Rating (1-5)</label>
-                  <input type="number" min="1" max="5" value={rating} onChange={(e) => setRating(Number(e.target.value))} className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs" required />
-                </div>
-                <div className="flex flex-col gap-4 items-center mt-2">
-                  <label className="flex items-center gap-2 text-xs font-semibold text-foreground cursor-pointer">
-                    <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} className="rounded" />
-                    <span>Featured?</span>
-                  </label>
-                </div>
-              </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              type="number"
+              min="1"
+              max="5"
+              label="Rating (1-5) *"
+              value={rating}
+              onChange={(e) => setRating(Number(e.target.value))}
+              required
+            />
+            <label className="flex items-center gap-2.5 text-xs font-semibold text-foreground cursor-pointer select-none pt-5">
+              <input
+                type="checkbox"
+                checked={featured}
+                onChange={(e) => setFeatured(e.target.checked)}
+                className="rounded border-zinc-300 dark:border-zinc-700 accent-accent"
+              />
+              <span>Featured? <span className="font-normal text-foreground-muted block text-[10px] mt-0.5">Tampil di halaman utama</span></span>
+            </label>
+          </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-foreground-muted">Status & Urutan Tampil (Opsional)</label>
-                <div className="flex gap-2">
-                  <select value={status} onChange={(e) => setStatus(e.target.value as any)} className="w-1/2 rounded-md border border-border bg-background px-3 py-2 text-xs">
-                    <option value="Published">Published</option>
-                    <option value="Draft">Draft</option>
-                    <option value="Archived">Archived</option>
-                  </select>
-                  <input type="number" value={order} onChange={(e) => setOrder(Number(e.target.value))} className="w-1/2 rounded-md border border-border bg-background px-3 py-2 text-xs" placeholder="Urutan" />
-                </div>
-              </div>
-
-              <div className="flex gap-3 justify-end mt-4">
-                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
-                  Batal
-                </Button>
-                <Button type="submit" variant="primary" disabled={isSaving || isUploading}>
-                  {isSaving ? "Menyimpan..." : "Simpan"}
-                </Button>
-              </div>
-            </form>
-          </Card>
+          <div className="flex flex-col gap-3 p-4 bg-background-overlay/60 rounded-xl border border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)]">
+            <span className="text-xs font-semibold text-foreground-muted select-none">Status & Urutan Tampil (Opsional)</span>
+            <div className="flex gap-2">
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as any)}
+                className="w-1/2 rounded-lg border border-[rgba(0,0,0,0.15)] dark:border-[rgba(255,255,255,0.15)] bg-background px-3 py-2.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent"
+              >
+                <option value="Published">Published</option>
+                <option value="Draft">Draft</option>
+                <option value="Archived">Archived</option>
+              </select>
+              <Input
+                type="number"
+                value={order}
+                onChange={(e) => setOrder(Number(e.target.value))}
+                placeholder="Urutan"
+                wrapperClassName="w-1/2"
+              />
+            </div>
+          </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }
