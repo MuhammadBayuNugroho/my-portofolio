@@ -92,17 +92,18 @@ export function Modal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
           onClick={onClose}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
           role="dialog"
           aria-modal="true"
         >
-          {/* Modal panel — fully solid, no transparency */}
+          {/* Modal panel — minimal animation, no scale */}
           <motion.div
-            initial={{ scale: 0.97, y: 10, opacity: 0 }}
-            animate={{ scale: 1, y: 0, opacity: 1 }}
-            exit={{ scale: 0.97, y: 10, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 380, damping: 30 }}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 6 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
             onClick={(e) => e.stopPropagation()}
             className={cn(
               "relative w-full bg-white dark:bg-[#111113] border border-border rounded-2xl",
