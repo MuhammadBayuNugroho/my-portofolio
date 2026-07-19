@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ProjectCard } from "@/components/public/projects/ProjectCard";
 import { ArrowLeft, ExternalLink, Github } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { notFound } from "next/navigation";
 import { projectsApi } from "@/lib/api";
 import type { Metadata } from "next";
@@ -158,8 +160,10 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
 
         {/* Content Markdown Case Study */}
         <div className="max-w-3xl mx-auto border-b border-border pb-16 mb-16">
-          <article className="prose dark:prose-invert max-w-none whitespace-pre-line">
-            {project.contentMarkdown}
+          <article className="prose prose-slate dark:prose-invert prose-headings:font-display prose-a:text-accent hover:prose-a:text-accent-hover prose-img:rounded-xl max-w-none">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {project.contentMarkdown || ""}
+            </ReactMarkdown>
           </article>
         </div>
 

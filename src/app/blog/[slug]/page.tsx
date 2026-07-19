@@ -4,6 +4,8 @@ import { PageLayout } from "@/components/public/PageLayout";
 import { Container } from "@/components/public/Container";
 import { Badge } from "@/components/ui/Badge";
 import { ArrowLeft, Calendar, Clock, List } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { notFound } from "next/navigation";
 import { formatDate } from "@/lib/utils";
 import { blogsApi } from "@/lib/api";
@@ -126,8 +128,10 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
             </div>
 
             {/* Markdown Content Parser */}
-            <article className="prose dark:prose-invert max-w-none whitespace-pre-line">
-              {blog.contentMarkdown}
+            <article className="prose prose-slate dark:prose-invert prose-headings:font-display prose-a:text-accent hover:prose-a:text-accent-hover prose-img:rounded-xl max-w-none">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {blog.contentMarkdown || ""}
+              </ReactMarkdown>
             </article>
           </div>
 

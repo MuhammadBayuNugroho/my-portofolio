@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 /* ── Tailwind v4: class-based dark mode (compatible with next-themes) ──────── */
 /* Without this, dark: prefix responds to OS preference (media query), not     */
