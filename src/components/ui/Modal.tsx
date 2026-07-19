@@ -6,7 +6,9 @@ import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─────────────────────────────────────────────────────────────────
-// MODAL — Redesigned solid dialog with sticky layout support
+// MODAL — Solid dialog that respects the active color theme
+// Uses CSS variables (bg-background-elevated, border-border) so
+// it adapts correctly to both light and dark modes.
 // ─────────────────────────────────────────────────────────────────
 
 export interface ModalProps {
@@ -56,7 +58,7 @@ export function Modal({
     <>
       {/* Header (Sticky/Shrink-0) */}
       {title && (
-        <div className="flex justify-between items-center p-6 md:px-8 md:py-6 border-b border-border shrink-0 bg-white dark:bg-[#111827] z-20">
+        <div className="flex justify-between items-center px-6 py-5 md:px-8 border-b border-border shrink-0 bg-background-elevated z-20">
           <div className="font-display text-h3 font-bold text-foreground">{title}</div>
           <button
             type="button"
@@ -76,7 +78,7 @@ export function Modal({
 
       {/* Footer (Sticky/Shrink-0) */}
       {footer && (
-        <div className="p-6 md:px-8 md:py-5 border-t border-border bg-background-elevated sticky bottom-0 shrink-0 z-20 flex justify-end items-center gap-3">
+        <div className="px-6 py-4 md:px-8 border-t border-border bg-background-elevated sticky bottom-0 shrink-0 z-20 flex justify-end items-center gap-3">
           {footer}
         </div>
       )}
@@ -100,25 +102,27 @@ export function Modal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4"
+          // z-50 so it sits above sidebar (z-40) and admin header (z-20)
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
           role="dialog"
           aria-modal="true"
         >
-          {/* Modal panel container */}
+          {/* Modal panel */}
           <motion.div
-            initial={{ scale: 0.97, y: 8 }}
-            animate={{ scale: 1, y: 0 }}
-            exit={{ scale: 0.97, y: 8 }}
-            transition={{ type: "spring", stiffness: 350, damping: 28 }}
+            initial={{ scale: 0.97, y: 10, opacity: 0 }}
+            animate={{ scale: 1, y: 0, opacity: 1 }}
+            exit={{ scale: 0.97, y: 10, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 380, damping: 30 }}
             onClick={(e) => e.stopPropagation()}
             className={cn(
-              "relative w-full bg-white dark:bg-[#111827] border border-[rgba(0,0,0,0.08)] dark:border-[rgba(255,255,255,0.08)] rounded-[24px]",
-              "shadow-[0_20px_60px_rgba(0,0,0,0.18)] overflow-hidden max-h-[90vh] flex flex-col min-h-0",
+              // Background and border use CSS variables — adapts to light/dark automatically
+              "relative w-full bg-background-elevated border border-border rounded-2xl",
+              "shadow-[0_24px_64px_rgba(0,0,0,0.25)] overflow-hidden",
+              "max-h-[90vh] flex flex-col min-h-0",
               maxWidth,
               className
             )}
           >
-            {/* Render wrapper dynamically as div or form */}
             {/* @ts-expect-error - Dynamic wrapper tag type interpolation */}
             <ModalWrapper className="flex flex-col flex-1 min-h-0" {...wrapperProps}>
               {modalContent}
@@ -129,4 +133,3 @@ export function Modal({
     </AnimatePresence>
   );
 }
-
