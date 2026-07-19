@@ -2,14 +2,11 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { Navbar } from "@/components/public/Navbar";
-import { Footer } from "@/components/public/Footer";
+import { PageLayout } from "@/components/public/PageLayout";
 import { Container } from "@/components/public/Container";
-import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
+import { Card, Badge, Input, Modal, LoadingSpinner, EmptyState } from "@/components/ui";
 import type { Certificate, CertificateCategory } from "@/types";
-import { Search, ExternalLink, Calendar, X, Eye, Loader2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Search, ExternalLink, Calendar, Eye } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import useSWR from "swr";
 import { certificatesApi } from "@/lib/api";
@@ -43,10 +40,8 @@ export default function CertificatesPage() {
   });
 
   return (
-    <>
-      <Navbar />
-      <main className="min-h-screen bg-background py-12">
-        <Container>
+    <PageLayout mainClassName="py-12">
+      <Container>
           {/* Header */}
           <div className="text-center max-w-2xl mx-auto mb-12">
             <h1 className="font-display text-h1 text-foreground mb-4">
@@ -78,22 +73,20 @@ export default function CertificatesPage() {
 
             {/* Search Input */}
             <div className="relative w-full md:max-w-xs order-1 md:order-2">
-              <input
+              <Search className="absolute left-3 top-2.5 text-foreground-subtle h-4 w-4 pointer-events-none" />
+              <Input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Cari penerbit atau ID..."
-                className="w-full rounded-md border border-border bg-background-elevated pl-10 pr-4 py-2 text-xs text-foreground focus-visible:outline-2 focus-visible:outline-accent"
+                className="pl-10"
               />
-              <Search className="absolute left-3 top-2.5 text-foreground-subtle h-4 w-4" />
             </div>
           </div>
 
           {/* Certificates Grid */}
           {isLoading ? (
-            <div className="flex justify-center py-20">
-              <Loader2 className="animate-spin text-accent" size={32} />
-            </div>
+            <LoadingSpinner />
           ) : filteredCertificates.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredCertificates.map((cert) => (
@@ -161,75 +154,49 @@ export default function CertificatesPage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-20">
-              <p className="text-body-lg text-foreground-muted">Sertifikat tidak ditemukan.</p>
-            </div>
+            <EmptyState message="Sertifikat tidak ditemukan." />
           )}
         </Container>
-      </main>
 
-      {/* Lightbox Certificate Preview */}
-      <AnimatePresence>
+      {/* Certificate Lightbox — reusable Modal */}
+      <Modal
+        isOpen={!!selectedCert}
+        onClose={() => setSelectedCert(null)}
+        title={selectedCert?.title}
+        maxWidth="max-w-3xl"
+      >
         {selectedCert && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setSelectedCert(null)}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 p-4 backdrop-blur-sm cursor-zoom-out"
-          >
-            <motion.div
-              initial={{ scale: 0.95, y: 15 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 15 }}
-              onClick={(e) => e.stopPropagation()}
-              className="relative max-w-3xl w-full bg-background-elevated border border-border rounded-xl overflow-hidden shadow-glow-accent cursor-default p-4 flex flex-col items-center"
-            >
-              <div className="w-full flex justify-between items-center mb-3">
-                <h3 className="font-display text-h3 text-foreground font-semibold line-clamp-1">
-                  {selectedCert.title}
-                </h3>
-                <button
-                  onClick={() => setSelectedCert(null)}
-                  className="rounded-full p-1.5 hover:bg-background-overlay text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
+          <div className="p-4 flex flex-col items-center">
+            <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-border bg-background-overlay mb-4">
+              <Image
+                src={selectedCert.imageUrl}
+                alt={selectedCert.title}
+                fill
+                className="object-contain"
+              />
+            </div>
+            <div className="w-full flex justify-end gap-3">
+              <button
+                onClick={() => setSelectedCert(null)}
+                className="px-4 py-2 bg-background-overlay hover:bg-border/60 text-xs font-semibold rounded-md border border-border text-foreground transition-colors cursor-pointer"
+              >
+                Tutup
+              </button>
+              {selectedCert.credentialUrl && (
+                <a
+                  href={selectedCert.credentialUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-accent hover:bg-accent-hover text-accent-foreground text-xs font-semibold rounded-md transition-colors inline-flex items-center gap-1.5"
                 >
-                  <X size={18} />
-                </button>
-              </div>
-
-              <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-border bg-background-overlay">
-                <Image
-                  src={selectedCert.imageUrl}
-                  alt={selectedCert.title}
-                  fill
-                  className="object-contain"
-                />
-              </div>
-
-              <div className="w-full flex justify-end gap-3 mt-4">
-                <button
-                  onClick={() => setSelectedCert(null)}
-                  className="px-4 py-2 bg-background-overlay hover:bg-border/60 text-xs font-semibold rounded-md border border-border text-foreground transition-colors cursor-pointer"
-                >
-                  Tutup
-                </button>
-                {selectedCert.credentialUrl && (
-                  <a
-                    href={selectedCert.credentialUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 bg-accent hover:bg-accent-hover text-accent-foreground text-xs font-semibold rounded-md transition-colors inline-flex items-center gap-1.5"
-                  >
-                    Verifikasi Kredensial
-                    <ExternalLink size={14} />
-                  </a>
-                )}
-              </div>
-            </motion.div>
-          </motion.div>
+                  Verifikasi Kredensial
+                  <ExternalLink size={14} />
+                </a>
+              )}
+            </div>
+          </div>
         )}
-      </AnimatePresence>
-      <Footer />
-    </>
+      </Modal>
+    </PageLayout>
   );
 }

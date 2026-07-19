@@ -2,12 +2,11 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Navbar } from "@/components/public/Navbar";
-import { Footer } from "@/components/public/Footer";
+import { PageLayout } from "@/components/public/PageLayout";
 import { Container } from "@/components/public/Container";
-import { Card } from "@/components/ui/Card";
+import { Card, LoadingSpinner, EmptyState } from "@/components/ui";
 import type { TestimonialRelation } from "@/types";
-import { Star, Quote, MessageSquare, Loader2 } from "lucide-react";
+import { Star, Quote, MessageSquare } from "lucide-react";
 import { motion } from "framer-motion";
 import useSWR from "swr";
 import { testimonialsApi } from "@/lib/api";
@@ -33,10 +32,8 @@ export default function TestimonialsPage() {
   });
 
   return (
-    <>
-      <Navbar />
-      <main className="min-h-screen bg-background py-12">
-        <Container>
+    <PageLayout mainClassName="py-12">
+      <Container>
           {/* Header */}
           <div className="text-center max-w-2xl mx-auto mb-12">
             <h1 className="font-display text-h1 text-foreground mb-4">
@@ -66,9 +63,7 @@ export default function TestimonialsPage() {
 
           {/* Testimonials Grid */}
           {isLoading ? (
-            <div className="flex justify-center py-20">
-              <Loader2 className="animate-spin text-accent" size={32} />
-            </div>
+            <LoadingSpinner />
           ) : filteredTestimonials.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredTestimonials.map((t, idx) => (
@@ -131,13 +126,9 @@ export default function TestimonialsPage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-20">
-              <p className="text-body-lg text-foreground-muted">Ulasan tidak ditemukan.</p>
-            </div>
+            <EmptyState message="Ulasan tidak ditemukan." />
           )}
         </Container>
-      </main>
-      <Footer />
-    </>
+    </PageLayout>
   );
 }

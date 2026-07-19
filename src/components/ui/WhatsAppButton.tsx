@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { MessageCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function WhatsAppButton() {
+export function WhatsAppButton() {
   const pathname = usePathname();
 
   // Do not show on admin pages

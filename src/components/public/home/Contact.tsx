@@ -3,8 +3,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Container } from "../Container";
-import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
+import { Card, Button, Input, Textarea, SectionHeader } from "@/components/ui";
 import { Mail, Send, CheckCircle } from "lucide-react";
 import { fadeUpVariants, staggerContainerVariants, viewportOptions } from "@/lib/animations";
 import { contactApi } from "@/lib/api";
@@ -27,7 +26,6 @@ export function Contact() {
     setIsSubmitting(true);
     setErrorMsg("");
     try {
-      // Real API contact request payload schema bound
       await contactApi.sendMessage({ senderName: name, senderEmail: email, subject, message });
       setIsSuccess(true);
       setName("");
@@ -59,15 +57,14 @@ export function Contact() {
           className="max-w-4xl mx-auto flex flex-col gap-10"
         >
           {/* Header */}
-          <div className="text-center">
-            <motion.div variants={fadeUpVariants} className="inline-flex items-center gap-2 rounded-full bg-accent-muted/20 px-3 py-1 text-xs font-semibold text-accent mb-4">
-              <Mail size={12} />
-              <span>Hubungi Saya</span>
-            </motion.div>
-            <motion.h2 variants={fadeUpVariants} className="font-display text-h1 text-foreground">
-              Mari Kolaborasi & Wujudkan Ide Anda
-            </motion.h2>
-          </div>
+          <motion.div variants={fadeUpVariants} className="text-center">
+            <SectionHeader
+              badge="Hubungi Saya"
+              BadgeIcon={Mail}
+              title="Mari Kolaborasi & Wujudkan Ide Anda"
+              align="center"
+            />
+          </motion.div>
 
           <motion.div variants={fadeUpVariants}>
             <Card className="p-8 shadow-card dark:shadow-dark-card" hoverEffect={false}>
@@ -91,59 +88,53 @@ export function Contact() {
                   )}
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="flex flex-col gap-2">
-                      <label htmlFor="name" className="text-xs font-medium text-foreground-muted">Nama Lengkap</label>
-                      <input
-                        id="name"
-                        type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="rounded-md border border-border bg-background px-4 py-2 text-caption text-foreground focus-visible:outline-2 focus-visible:outline-accent"
-                        placeholder="Nama Anda"
-                        required
-                      />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <label htmlFor="email" className="text-xs font-medium text-foreground-muted">Email</label>
-                      <input
-                        id="email"
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="rounded-md border border-border bg-background px-4 py-2 text-caption text-foreground focus-visible:outline-2 focus-visible:outline-accent"
-                        placeholder="email@anda.com"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <label htmlFor="subject" className="text-xs font-medium text-foreground-muted">Subjek / Topik</label>
-                    <input
-                      id="subject"
+                    <Input
+                      id="name"
+                      label="Nama Lengkap"
                       type="text"
-                      value={subject}
-                      onChange={(e) => setSubject(e.target.value)}
-                      className="rounded-md border border-border bg-background px-4 py-2 text-caption text-foreground focus-visible:outline-2 focus-visible:outline-accent"
-                      placeholder="Judul Pesan"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Nama Anda"
+                      required
+                    />
+                    <Input
+                      id="email"
+                      label="Email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="email@anda.com"
                       required
                     />
                   </div>
 
-                  <div className="flex flex-col gap-2">
-                    <label htmlFor="message" className="text-xs font-medium text-foreground-muted">Pesan</label>
-                    <textarea
-                      id="message"
-                      rows={5}
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      className="rounded-md border border-border bg-background px-4 py-2 text-caption text-foreground focus-visible:outline-2 focus-visible:outline-accent resize-none"
-                      placeholder="Tulis pesan lengkap Anda di sini..."
-                      required
-                    />
-                  </div>
+                  <Input
+                    id="subject"
+                    label="Subjek / Topik"
+                    type="text"
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                    placeholder="Judul Pesan"
+                    required
+                  />
 
-                  <Button type="submit" variant="primary" size="lg" disabled={isSubmitting} className="self-start gap-2">
+                  <Textarea
+                    id="message"
+                    label="Pesan"
+                    rows={5}
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Tulis pesan lengkap Anda di sini..."
+                    required
+                  />
+
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="lg"
+                    disabled={isSubmitting}
+                    className="self-start gap-2"
+                  >
                     {isSubmitting ? "Mengirim..." : "Kirim Pesan"}
                     <Send size={16} />
                   </Button>

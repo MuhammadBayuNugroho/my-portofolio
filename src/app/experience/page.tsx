@@ -1,13 +1,11 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Navbar } from "@/components/public/Navbar";
-import { Footer } from "@/components/public/Footer";
+import { PageLayout } from "@/components/public/PageLayout";
 import { Container } from "@/components/public/Container";
-import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
+import { Card, Badge, LoadingSpinner, EmptyState } from "@/components/ui";
 import { getDuration } from "@/lib/utils";
-import { Briefcase, Calendar, MapPin, CheckCircle2, Award, Landmark, Compass, Loader2 } from "lucide-react";
+import { Briefcase, Calendar, MapPin, CheckCircle2, Award, Landmark, Compass } from "lucide-react";
 import { motion } from "framer-motion";
 import useSWR from "swr";
 import { experiencesApi } from "@/lib/api";
@@ -30,10 +28,8 @@ export default function ExperiencePage() {
   });
 
   return (
-    <>
-      <Navbar />
-      <main className="min-h-screen bg-background py-16">
-        <Container>
+    <PageLayout mainClassName="py-16">
+      <Container>
           {/* Header */}
           <div className="text-center max-w-2xl mx-auto mb-12">
             <h1 className="font-display text-h1 text-foreground mb-4">
@@ -63,9 +59,7 @@ export default function ExperiencePage() {
 
           {/* Vertical Timeline Layout */}
           {isLoading ? (
-            <div className="flex justify-center py-20">
-              <Loader2 className="animate-spin text-accent" size={32} />
-            </div>
+            <LoadingSpinner />
           ) : filteredData.length > 0 ? (
             <div className="relative max-w-3xl mx-auto pl-6 border-l-2 border-border/80 flex flex-col gap-10">
               {filteredData.map((exp, idx) => {
@@ -153,13 +147,9 @@ export default function ExperiencePage() {
               })}
             </div>
           ) : (
-            <div className="text-center py-20">
-              <p className="text-body-lg text-foreground-muted">Pengalaman tidak ditemukan.</p>
-            </div>
+            <EmptyState message="Pengalaman tidak ditemukan." />
           )}
         </Container>
-      </main>
-      <Footer />
-    </>
+    </PageLayout>
   );
 }

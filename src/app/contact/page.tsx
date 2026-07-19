@@ -1,9 +1,8 @@
 "use client";
 
-import { Navbar } from "@/components/public/Navbar";
-import { Footer } from "@/components/public/Footer";
+import { PageLayout } from "@/components/public/PageLayout";
 import { Container } from "@/components/public/Container";
-import { Card } from "@/components/ui/Card";
+import { Card } from "@/components/ui";
 import { Contact } from "@/components/public/home/Contact";
 import { SITE_CONFIG } from "@/constants/site";
 import { Mail, MapPin, Share2 } from "lucide-react";
@@ -37,10 +36,8 @@ export default function ContactPage() {
   ];
 
   return (
-    <>
-      <Navbar />
-      <main className="min-h-screen bg-background py-16">
-        <Container>
+    <PageLayout mainClassName="py-16">
+      <Container>
           <motion.div
             variants={staggerContainerVariants}
             initial="hidden"
@@ -97,8 +94,6 @@ export default function ContactPage() {
             </motion.div>
           </motion.div>
         </Container>
-      </main>
-      <Footer />
-    </>
+    </PageLayout>
   );
 }

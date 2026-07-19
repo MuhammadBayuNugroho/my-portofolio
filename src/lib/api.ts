@@ -46,6 +46,7 @@ const IS_REAL_API = Boolean(
 
 // Log sekali saat module di-load (hanya di browser, tidak saat SSG)
 if (typeof window !== "undefined") {
+  // eslint-disable-next-line no-console
   console.log(
     `[API] Mode: ${IS_REAL_API ? "🟢 REAL (GAS)" : "🔴 SIMULATOR"}`,
     IS_REAL_API ? BASE_URL.substring(0, 60) + "..." : "BASE_URL tidak dikonfigurasi"
