@@ -63,7 +63,7 @@ export function Modal({
       )}
 
       {/* Body — scrollable */}
-      <div className={cn("overflow-y-auto flex-1 p-6 md:p-8 min-h-0", bodyClassName)}>
+      <div className={cn("overflow-y-auto overscroll-contain flex-1 p-6 md:p-8 min-h-0", bodyClassName)}>
         {children}
       </div>
 
@@ -88,37 +88,47 @@ export function Modal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.15, ease: "easeOut" }}
-          onClick={onClose}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
-          role="dialog"
-          aria-modal="true"
-        >
-          {/* Modal panel — minimal animation, no scale */}
+        <>
+          {/* ── Backdrop (blur layer) — no scrollable children ──────────────────
+              Separated from the modal panel so scrolling inside the panel
+              never triggers backdrop blur recomposition → eliminates scroll lag.
+          ──────────────────────────────────────────────────────────────────── */}
           <motion.div
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 6 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            onClick={(e) => e.stopPropagation()}
-            className={cn(
-              "relative w-full bg-white dark:bg-[#111113] border border-border rounded-2xl",
-              "shadow-[0_24px_64px_rgba(0,0,0,0.3)] overflow-hidden",
-              "max-h-[90vh] flex flex-col min-h-0",
-              maxWidth,
-              className
-            )}
-          >
-            {/* @ts-expect-error - Dynamic wrapper tag type interpolation */}
-            <ModalWrapper className="flex flex-col flex-1 min-h-0" {...wrapperProps}>
-              {modalContent}
-            </ModalWrapper>
-          </motion.div>
-        </motion.div>
+            onClick={onClose}
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md"
+            aria-hidden="true"
+          />
+
+          {/* ── Modal panel — own compositor layer ──────────────────────────── */}
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 6 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
+              onClick={(e) => e.stopPropagation()}
+              // will-change hints browser to promote panel to its own GPU layer
+              className={cn(
+                "relative w-full bg-white dark:bg-[#111113] border border-border rounded-2xl",
+                "shadow-[0_24px_64px_rgba(0,0,0,0.3)] overflow-hidden",
+                "max-h-[90vh] flex flex-col min-h-0 pointer-events-auto will-change-transform",
+                maxWidth,
+                className
+              )}
+              role="dialog"
+              aria-modal="true"
+            >
+              {/* @ts-expect-error - Dynamic wrapper tag type interpolation */}
+              <ModalWrapper className="flex flex-col flex-1 min-h-0" {...wrapperProps}>
+                {modalContent}
+              </ModalWrapper>
+            </motion.div>
+          </div>
+        </>
       )}
     </AnimatePresence>
   );
