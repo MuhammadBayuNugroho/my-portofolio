@@ -1,16 +1,15 @@
 import React from "react";
 import { cn } from "@/lib/utils";
-import type { LucideIcon } from "lucide-react";
 
-// ─────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────
 // SECTION HEADER — Badge + Title + Description
-// ─────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────
 
 interface SectionHeaderProps {
   /** Small pill label above the title */
   badge?: string;
   /** Optional Lucide icon shown inside the badge */
-  BadgeIcon?: LucideIcon;
+  BadgeIcon?: React.ComponentType<{ size?: number }>;
   /** Badge color variant */
   badgeVariant?: "accent" | "violet" | "success" | "warning";
   /** The main heading text */

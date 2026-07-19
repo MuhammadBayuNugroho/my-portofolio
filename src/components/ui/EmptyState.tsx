@@ -1,10 +1,9 @@
-import type { LucideIcon } from "lucide-react";
 import { SearchX } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// ─────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────
 // EMPTY STATE — Consistent "no results" display
-// ─────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────
 
 interface EmptyStateProps {
   /** Primary message, e.g. "Artikel tidak ditemukan." */
@@ -12,7 +11,7 @@ interface EmptyStateProps {
   /** Supporting hint below the message */
   hint?: string;
   /** Optional Lucide icon to display above the message */
-  Icon?: LucideIcon;
+  Icon?: typeof SearchX;
   className?: string;
 }
 

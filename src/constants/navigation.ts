@@ -1,4 +1,4 @@
-import type { LucideIcon } from "lucide-react";
+import type React from "react";
 import {
   Home,
   User,
@@ -16,12 +16,15 @@ import {
 // ─────────────────────────────────────────────────────────────────
 // NAVIGATION ITEM TYPES
 // ─────────────────────────────────────────────────────────────────
+type IconComponent = React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>;
+
 export interface NavItem {
   label: string;
   href: string;
-  icon: LucideIcon;
+  icon: IconComponent;
   description?: string;
 }
+
 
 // ─────────────────────────────────────────────────────────────────
 // PUBLIC NAVIGATION MENU
