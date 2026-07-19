@@ -22,10 +22,10 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     const inputClass = cn(
       "w-full rounded-lg border bg-background py-2.5 text-xs text-foreground transition-all duration-200",
       "placeholder:text-foreground-subtle/70 px-3.5",
-      "border-[rgba(0,0,0,0.15)] dark:border-[rgba(255,255,255,0.15)]",
-      "hover:border-[rgba(0,0,0,0.3)] dark:hover:border-[rgba(255,255,255,0.35)]",
-      "focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent",
-      disabled && "opacity-50 cursor-not-allowed bg-background-overlay/30 border-[rgba(0,0,0,0.08)] dark:border-[rgba(255,255,255,0.08)]",
+      "border-zinc-300 dark:border-zinc-600",
+      "hover:border-zinc-400 dark:hover:border-zinc-400",
+      "focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent",
+      disabled && "opacity-50 cursor-not-allowed bg-background-overlay/30 border-zinc-200 dark:border-zinc-700",
       error && "border-error hover:border-error focus:ring-error/20 focus:border-error",
       iconLeft && "pl-10",
       iconRight && "pr-10",
@@ -112,10 +112,10 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     const textareaClass = cn(
       "w-full rounded-lg border bg-background px-3.5 py-2.5 text-xs text-foreground min-h-[80px] transition-all duration-200",
       "placeholder:text-foreground-subtle/70",
-      "border-[rgba(0,0,0,0.15)] dark:border-[rgba(255,255,255,0.15)]",
-      "hover:border-[rgba(0,0,0,0.3)] dark:hover:border-[rgba(255,255,255,0.35)]",
-      "focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent",
-      disabled && "opacity-50 cursor-not-allowed bg-background-overlay/30 border-[rgba(0,0,0,0.08)] dark:border-[rgba(255,255,255,0.08)]",
+      "border-zinc-300 dark:border-zinc-600",
+      "hover:border-zinc-400 dark:hover:border-zinc-400",
+      "focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent",
+      disabled && "opacity-50 cursor-not-allowed bg-background-overlay/30 border-zinc-200 dark:border-zinc-700",
       error && "border-error hover:border-error focus:ring-error/20 focus:border-error",
       className
     );

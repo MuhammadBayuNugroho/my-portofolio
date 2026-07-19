@@ -56,7 +56,7 @@ export default function AdminDashboardPage() {
         {stats.map((stat, idx) => (
           <Card
             key={idx}
-            className="p-5 flex items-center justify-between border border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)] bg-white dark:bg-[#0B0B0C] shadow-sm hover:shadow-md transition-all duration-300"
+            className="p-5 flex items-center justify-between"
             hoverEffect={true}
           >
             <div>
@@ -81,16 +81,16 @@ export default function AdminDashboardPage() {
 
           <div className="flex flex-col gap-4">
             {messages.length === 0 ? (
-              <Card className="p-8 text-center text-xs text-foreground-muted border border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)] bg-white dark:bg-[#0B0B0C]" hoverEffect={false}>
+              <Card className="p-8 text-center text-xs text-foreground-muted" hoverEffect={false}>
                 Tidak ada pesan masuk.
               </Card>
             ) : (
               messages.slice(0, 5).map((msg) => (
                 <Card
                   key={msg.id}
-                  className={`p-5 flex flex-col gap-3.5 bg-white dark:bg-[#0B0B0C] border transition-all duration-300 ${
+                  className={`p-5 flex flex-col gap-3.5 transition-all duration-300 ${
                     msg.isRead
-                      ? "border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)]"
+                      ? ""
                       : "border-accent/40 shadow-[0_0_12px_rgba(56,189,248,0.05)]"
                   }`}
                   hoverEffect={false}
@@ -145,7 +145,7 @@ export default function AdminDashboardPage() {
             <h2 className="font-display text-h3 text-foreground font-semibold">Aksi Cepat</h2>
           </div>
 
-          <Card className="p-5 flex flex-col gap-2.5 bg-white dark:bg-[#0B0B0C] border border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)] shadow-sm" hoverEffect={false}>
+          <Card className="p-5 flex flex-col gap-2.5" hoverEffect={false}>
             {[
               { label: "➕ Buat Project Baru",       href: "/admin/projects" },
               { label: "✍️ Tulis Artikel Blog",      href: "/admin/blog" },

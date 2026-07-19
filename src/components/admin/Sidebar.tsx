@@ -6,10 +6,15 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "next-themes";
 import { ADMIN_NAV_ITEMS } from "@/constants/navigation";
-import { LogOut, Shield, Compass, Sun, Moon } from "lucide-react";
+import { LogOut, Shield, Compass, Sun, Moon, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export function Sidebar() {
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { logout, user } = useAuth();
@@ -29,11 +34,28 @@ export function Sidebar() {
     router.push("/admin");
   };
 
+  // Tutup sidebar di mobile setelah navigasi
+  const handleNavClick = () => {
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
+      onClose();
+    }
+  };
+
   return (
-    <aside className="w-64 border-r border-[rgba(0,0,0,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#0B0B0C] min-h-screen flex flex-col justify-between sticky top-0">
-      {/* Header */}
-      <div>
-        <div className="h-16 flex items-center gap-2.5 px-6 border-b border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)]">
+    <aside
+      className={cn(
+        // Fixed overlay — keluar dari flow layout
+        "fixed inset-y-0 left-0 z-40 w-64 h-screen",
+        "bg-background-elevated border-r border-border",
+        "flex flex-col",
+        // Animasi slide
+        "transition-transform duration-300 ease-in-out",
+        isOpen ? "translate-x-0" : "-translate-x-full"
+      )}
+    >
+      {/* ── Header ──────────────────────────────────── */}
+      <div className="h-14 shrink-0 flex items-center justify-between px-5 border-b border-border">
+        <div className="flex items-center gap-2.5">
           <div className="h-8 w-8 rounded-lg bg-accent/10 flex items-center justify-center text-accent">
             <Shield size={16} />
           </div>
@@ -42,15 +64,29 @@ export function Sidebar() {
           </span>
         </div>
 
-        {/* User profile tag */}
+        {/* Tombol X — hanya muncul di mobile */}
+        <button
+          onClick={onClose}
+          className="lg:hidden p-1.5 rounded-lg text-foreground-muted hover:bg-background-overlay hover:text-foreground transition-colors cursor-pointer"
+          aria-label="Tutup sidebar"
+        >
+          <X size={16} />
+        </button>
+      </div>
+
+      {/* ── Scrollable area ──────────────────────────── */}
+      <div className="flex-1 overflow-y-auto flex flex-col">
+        {/* User profile */}
         {user && (
-          <div className="p-3.5 mx-4 mt-5 rounded-xl bg-background-overlay/60 border border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)] flex items-center gap-3">
+          <div className="p-3.5 mx-4 mt-5 rounded-xl bg-background-overlay/60 border border-border flex items-center gap-3">
             <div className="h-8 w-8 rounded-lg bg-accent text-accent-foreground flex items-center justify-center font-bold text-xs uppercase shadow-sm">
               {user.username.slice(0, 2)}
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-xs font-semibold text-foreground truncate">{user.username}</p>
-              <span className="text-[9px] text-foreground-muted/80 uppercase font-semibold tracking-wider">Administrator</span>
+              <span className="text-[9px] text-foreground-muted/80 uppercase font-semibold tracking-wider">
+                Administrator
+              </span>
             </div>
           </div>
         )}
@@ -63,6 +99,7 @@ export function Sidebar() {
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={handleNavClick}
                 className={cn(
                   "flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-medium transition-all duration-200",
                   isActive
@@ -70,7 +107,10 @@ export function Sidebar() {
                     : "text-foreground-muted hover:bg-background-overlay hover:text-foreground"
                 )}
               >
-                <item.icon size={15} className={cn(isActive ? "text-accent" : "text-foreground-muted")} />
+                <item.icon
+                  size={15}
+                  className={cn(isActive ? "text-accent" : "text-foreground-muted")}
+                />
                 {item.label}
               </Link>
             );
@@ -78,8 +118,8 @@ export function Sidebar() {
         </nav>
       </div>
 
-      {/* Footer / Actions */}
-      <div className="p-4 border-t border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)] flex flex-col gap-1.5">
+      {/* ── Footer / Actions ─────────────────────────── */}
+      <div className="p-4 border-t border-border flex flex-col gap-1.5 shrink-0">
         <Link
           href="/"
           className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-medium text-foreground-muted hover:bg-background-overlay hover:text-foreground transition-all duration-200"
@@ -108,7 +148,6 @@ export function Sidebar() {
           Keluar Sesi
         </button>
       </div>
-
     </aside>
   );
 }
