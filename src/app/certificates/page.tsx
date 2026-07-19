@@ -16,7 +16,17 @@ export default function CertificatesPage() {
   const [activeCategory, setActiveCategory] = useState<CertificateCategory | "All">("All");
 
   const { data: certificates = [], isLoading } = useSWR("certificates", () =>
-    certificatesApi.getAll().then((res) => res.data || [])
+    certificatesApi.getAll().then((res) => {
+      const data = res.data || [];
+      return data.sort((a, b) => {
+        if (a.order !== undefined && b.order !== undefined) {
+          return a.order - b.order;
+        }
+        if (a.order !== undefined) return -1;
+        if (b.order !== undefined) return 1;
+        return new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime();
+      });
+    })
   );
 
   const [selectedCert, setSelectedCert] = useState<Certificate | null>(null);

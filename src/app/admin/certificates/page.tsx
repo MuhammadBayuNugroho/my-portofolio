@@ -78,7 +78,7 @@ export default function AdminCertificatesPage() {
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<"Active" | "Expired">("Active");
   const [featured, setFeatured] = useState(false);
-  const [order, setOrder] = useState<number>(0);
+  const [order, setOrder] = useState<number | "">("");
 
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -93,7 +93,18 @@ export default function AdminCertificatesPage() {
     try {
       const res = await certificatesApi.getAll();
       if (res.success && res.data) {
-        setCerts(res.data);
+        // Urutkan berdasarkan order terlebih dahulu (yang punya order), 
+        // lalu baru yang tidak punya order, dan terakhir berdasarkan tanggal
+        const sortedCerts = res.data.sort((a, b) => {
+          if (a.order !== undefined && b.order !== undefined) {
+            return a.order - b.order;
+          }
+          if (a.order !== undefined) return -1;
+          if (b.order !== undefined) return 1;
+          // Keduanya undefined order, urutkan berdasarkan date descending
+          return new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime();
+        });
+        setCerts(sortedCerts);
       }
     } catch (err) {
       setError("Gagal memuat data sertifikat.");
@@ -119,7 +130,7 @@ export default function AdminCertificatesPage() {
     setDescription("");
     setStatus("Active");
     setFeatured(false);
-    setOrder(0);
+    setOrder("");
     setIsModalOpen(true);
   };
 
@@ -136,7 +147,7 @@ export default function AdminCertificatesPage() {
     setDescription(cert.description || "");
     setStatus(cert.status || "Active");
     setFeatured(!!cert.featured);
-    setOrder(cert.order || 0);
+    setOrder(cert.order !== undefined ? cert.order : "");
     setIsModalOpen(true);
   };
 
@@ -195,7 +206,7 @@ export default function AdminCertificatesPage() {
       description,
       status,
       featured,
-      order: Number(order),
+      order: order !== "" ? Number(order) : undefined,
     };
 
     try {
@@ -373,7 +384,7 @@ export default function AdminCertificatesPage() {
                 <Input
                   type="number"
                   value={order}
-                  onChange={(e) => setOrder(Number(e.target.value))}
+                  onChange={(e) => setOrder(e.target.value === "" ? "" : Number(e.target.value))}
                   placeholder="Urutan"
                   wrapperClassName="w-1/2"
                 />

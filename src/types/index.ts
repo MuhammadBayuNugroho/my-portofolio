@@ -168,6 +168,7 @@ export interface Certificate extends BaseEntity {
   description?: string;
   status: "Active" | "Expired";
   featured: boolean;
+  order?: number; // Optional order index for flexible sorting
 }
 
 // ─────────────────────────────────────────────────────────────────
