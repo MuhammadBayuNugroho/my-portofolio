@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Image from "next/image";
 import { PageLayout } from "@/components/public/PageLayout";
 import { Container } from "@/components/public/Container";
@@ -18,13 +18,10 @@ export default function TestimonialsPage() {
     testimonialsApi.getAll().then((res) => res.data || [])
   );
 
-  const relations: (TestimonialRelation | "All")[] = [
-    "All",
-    "Client",
-    "Colleague",
-    "Mentor",
-    "Supervisee",
-  ];
+  const relations = useMemo(() => {
+    const rels = [...new Set(testimonials.map((t) => t.relation))].filter(Boolean) as string[];
+    return ["All", ...rels];
+  }, [testimonials]);
 
   // Filtering Logic
   const filteredTestimonials = testimonials.filter((t) => {
@@ -49,7 +46,7 @@ export default function TestimonialsPage() {
             {relations.map((rel) => (
               <button
                 key={rel}
-                onClick={() => setActiveRelation(rel)}
+                onClick={() => setActiveRelation(rel as TestimonialRelation | "All")}
                 className={`px-4 py-2 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
                   activeRelation === rel
                     ? "bg-accent text-accent-foreground"
@@ -76,11 +73,11 @@ export default function TestimonialsPage() {
                 >
                   <Card className="h-full flex flex-col justify-between relative p-6" hoverEffect={true}>
                     {/* Background Quote Icon for Aesthetics */}
-                    <div className="absolute top-4 right-4 text-accent/5 pointer-events-none">
-                      <Quote size={60} />
+                    <div className="absolute top-6 right-6 text-foreground-subtle/20 pointer-events-none">
+                      <Quote size={40} />
                     </div>
 
-                    <div>
+                    <div className="relative z-10">
                       {/* Rating Stars */}
                       <div className="flex items-center gap-1 mb-4 text-warning">
                         {Array.from({ length: t.rating }).map((_, sIdx) => (
@@ -97,7 +94,7 @@ export default function TestimonialsPage() {
                     {/* Author Footer */}
                     <div className="flex items-center gap-3 border-t border-border/40 pt-4 mt-auto">
                       {t.authorImageUrl ? (
-                        <div className="relative h-10 w-10 rounded-full overflow-hidden border border-border bg-background-overlay">
+                        <div className="relative h-10 w-10 shrink-0 rounded-full overflow-hidden border border-border bg-background-overlay">
                           <Image
                             src={t.authorImageUrl}
                             alt={t.authorName}
@@ -106,17 +103,17 @@ export default function TestimonialsPage() {
                           />
                         </div>
                       ) : (
-                        <div className="h-10 w-10 rounded-full bg-accent/10 flex items-center justify-center text-accent">
+                        <div className="h-10 w-10 shrink-0 rounded-full bg-accent/10 flex items-center justify-center text-accent">
                           <MessageSquare size={16} />
                         </div>
                       )}
                       
-                      <div>
-                        <h4 className="text-xs font-semibold text-foreground">{t.authorName}</h4>
-                        <p className="text-[10px] text-foreground-subtle">
-                          {t.authorRole} di {t.authorOrganization}
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-xs font-semibold text-foreground truncate">{t.authorName}</h4>
+                        <p className="text-[10px] text-foreground-subtle truncate">
+                          {t.authorRole} {t.authorOrganization ? `di ${t.authorOrganization}` : ""}
                         </p>
-                        <span className="inline-block mt-1 text-[8px] bg-accent-muted/20 text-accent border border-accent/20 px-1.5 py-0.5 rounded font-bold uppercase">
+                        <span className="inline-block mt-1 text-[8px] bg-background-overlay text-foreground-muted border border-border px-1.5 py-0.5 rounded font-bold uppercase">
                           {t.relation}
                         </span>
                       </div>

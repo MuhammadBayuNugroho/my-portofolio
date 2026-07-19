@@ -3,7 +3,7 @@ import Image from "next/image";
 import { PageLayout } from "@/components/public/PageLayout";
 import { Container } from "@/components/public/Container";
 import { Badge } from "@/components/ui/Badge";
-import { ArrowLeft, Calendar, Clock, List } from "lucide-react";
+import { ArrowLeft, Calendar, List } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { notFound } from "next/navigation";
@@ -11,6 +11,7 @@ import { formatDate } from "@/lib/utils";
 import { blogsApi } from "@/lib/api";
 import type { Metadata } from "next";
 import { SITE_CONFIG } from "@/constants/site";
+import { BlogMetrics } from "@/components/public/blog/BlogMetrics";
 
 interface BlogDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -102,17 +103,16 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
                 {blog.title}
               </h1>
 
-              <div className="flex items-center gap-4 text-xs text-foreground-subtle">
-                <span className="flex items-center gap-1">
-                  <Calendar size={14} />
+              <div className="flex flex-wrap items-center gap-4 text-xs text-foreground-subtle">
+                <span className="flex items-center gap-1.5 bg-background-overlay px-2.5 py-1 rounded-full border border-border">
+                  <Calendar size={14} className="text-foreground-muted" />
                   {formatDate(blog.createdAt)}
                 </span>
-                {blog.readingTime && (
-                  <span className="flex items-center gap-1">
-                    <Clock size={14} />
-                    {blog.readingTime} Menit Baca
-                  </span>
-                )}
+                <BlogMetrics 
+                  slug={blog.slug} 
+                  initialViews={blog.views || 0} 
+                  contentMarkdown={blog.contentMarkdown || ""} 
+                />
               </div>
             </div>
 
