@@ -1,16 +1,28 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
+import { useTheme } from "next-themes";
 import { ADMIN_NAV_ITEMS } from "@/constants/navigation";
-import { LogOut, Shield, Compass } from "lucide-react";
+import { LogOut, Shield, Compass, Sun, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { logout, user } = useAuth();
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
+  };
 
   const handleLogout = () => {
     logout();
@@ -76,6 +88,18 @@ export function Sidebar() {
           Kembali ke Web
         </Link>
 
+        {/* Theme Toggle */}
+        {mounted && (
+          <button
+            onClick={toggleTheme}
+            className="flex w-full items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-medium text-foreground-muted hover:bg-background-overlay hover:text-foreground transition-all duration-200 cursor-pointer text-left"
+            aria-label="Toggle tema"
+          >
+            {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
+            {theme === "dark" ? "Mode Terang" : "Mode Gelap"}
+          </button>
+        )}
+
         <button
           onClick={handleLogout}
           className="flex w-full items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-medium text-error hover:bg-error/8 transition-all duration-200 cursor-pointer text-left"
@@ -84,6 +108,7 @@ export function Sidebar() {
           Keluar Sesi
         </button>
       </div>
+
     </aside>
   );
 }
