@@ -6,29 +6,20 @@ import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─────────────────────────────────────────────────────────────────
-// MODAL — Solid dialog that respects the active color theme
-// Uses CSS variables (bg-background-elevated, border-border) so
-// it adapts correctly to both light and dark modes.
+// MODAL — Solid, fully opaque dialog. No transparency in panel.
+// bg-white in light mode, dark slate in dark mode.
 // ─────────────────────────────────────────────────────────────────
 
 export interface ModalProps {
-  /** Whether the modal is visible */
   isOpen: boolean;
-  /** Called when the user clicks the backdrop or the close button */
   onClose: () => void;
-  /** Rendered in the modal header bar */
   title?: React.ReactNode;
-  /** Modal body content */
   children: React.ReactNode;
-  /** Tailwind max-width class, e.g. "max-w-2xl" */
   maxWidth?: string;
   className?: string;
   bodyClassName?: string;
-  /** Optional sticky footer content */
   footer?: React.ReactNode;
-  /** Whether the modal contents should be wrapped in a form tag */
   asForm?: boolean;
-  /** Form submission handler if asForm is true */
   onSubmit?: (e: React.FormEvent<HTMLFormElement>) => void;
 }
 
@@ -56,9 +47,9 @@ export function Modal({
 
   const modalContent = (
     <>
-      {/* Header (Sticky/Shrink-0) */}
+      {/* Header — sticky, solid background */}
       {title && (
-        <div className="flex justify-between items-center px-6 py-5 md:px-8 border-b border-border shrink-0 bg-background-elevated z-20">
+        <div className="flex justify-between items-center px-6 py-5 md:px-8 border-b border-border shrink-0 bg-white dark:bg-[#111113] z-20">
           <div className="font-display text-h3 font-bold text-foreground">{title}</div>
           <button
             type="button"
@@ -71,14 +62,14 @@ export function Modal({
         </div>
       )}
 
-      {/* Body (Scrollable container) */}
+      {/* Body — scrollable */}
       <div className={cn("overflow-y-auto flex-1 p-6 md:p-8 min-h-0", bodyClassName)}>
         {children}
       </div>
 
-      {/* Footer (Sticky/Shrink-0) */}
+      {/* Footer — sticky, solid background */}
       {footer && (
-        <div className="px-6 py-4 md:px-8 border-t border-border bg-background-elevated sticky bottom-0 shrink-0 z-20 flex justify-end items-center gap-3">
+        <div className="px-6 py-4 md:px-8 border-t border-border bg-white dark:bg-[#111113] sticky bottom-0 shrink-0 z-20 flex justify-end items-center gap-3">
           {footer}
         </div>
       )}
@@ -102,12 +93,11 @@ export function Modal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          // z-50 so it sits above sidebar (z-40) and admin header (z-20)
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
           role="dialog"
           aria-modal="true"
         >
-          {/* Modal panel */}
+          {/* Modal panel — fully solid, no transparency */}
           <motion.div
             initial={{ scale: 0.97, y: 10, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}
@@ -115,9 +105,8 @@ export function Modal({
             transition={{ type: "spring", stiffness: 380, damping: 30 }}
             onClick={(e) => e.stopPropagation()}
             className={cn(
-              // Background and border use CSS variables — adapts to light/dark automatically
-              "relative w-full bg-background-elevated border border-border rounded-2xl",
-              "shadow-[0_24px_64px_rgba(0,0,0,0.25)] overflow-hidden",
+              "relative w-full bg-white dark:bg-[#111113] border border-border rounded-2xl",
+              "shadow-[0_24px_64px_rgba(0,0,0,0.3)] overflow-hidden",
               "max-h-[90vh] flex flex-col min-h-0",
               maxWidth,
               className
