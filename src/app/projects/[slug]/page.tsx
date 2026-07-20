@@ -101,9 +101,9 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
         {/* Back button */}
         <Link
           href="/projects"
-          className="inline-flex items-center gap-2 text-caption text-foreground-muted hover:text-foreground mb-8 transition-colors"
+          className="inline-flex items-center gap-2 text-caption font-medium px-3 py-1.5 rounded-md border border-border bg-foreground text-background hover:opacity-80 mb-8 transition-opacity"
         >
-          <ArrowLeft size={16} />
+          <ArrowLeft size={14} />
           Kembali ke Proyek
         </Link>
 
@@ -128,21 +128,23 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
           </div>
 
           {/* CTA panel */}
-          <div className="lg:col-span-4 bg-background-elevated border border-border rounded-xl p-6 flex flex-col gap-4 w-full">
-            <h3 className="font-display text-h3 text-foreground mb-2">Tautan Proyek</h3>
+          <div className="lg:col-span-4 bg-background-elevated border border-border rounded-xl p-6 flex flex-col gap-3 w-full">
+            <p className="text-xs font-semibold uppercase tracking-widest text-foreground-subtle">
+              Tautan Proyek
+            </p>
             {project.projectUrl && (
-              <Button variant="primary" asChild className="w-full gap-2">
+              <Button variant="primary" size="lg" asChild className="w-full gap-2">
                 <a href={project.projectUrl} target="_blank" rel="noopener noreferrer">
-                  Kunjungi Live Demo
                   <ExternalLink size={16} />
+                  Kunjungi Live Demo
                 </a>
               </Button>
             )}
             {project.githubUrl && (
-              <Button variant="outline" asChild className="w-full gap-2">
+              <Button variant="outline" size="md" asChild className="w-full gap-2">
                 <a href={project.githubUrl} target="_blank" rel="noopener noreferrer">
-                  Lihat Kode Sumber
                   <Github size={16} />
+                  Lihat Kode Sumber
                 </a>
               </Button>
             )}
