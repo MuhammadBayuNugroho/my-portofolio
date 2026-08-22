@@ -27,8 +27,8 @@ export function ImageUpload({
   helperText = "PNG, JPG, GIF up to 5MB. Drag & drop or click to upload.",
 }: ImageUploadProps) {
   // satisfy noUnusedLocals compiler check
-  if (false && onChange) {
-    onChange(value);
+  if (!onChange) {
+    onChange;
   }
   const [isDragActive, setIsDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);

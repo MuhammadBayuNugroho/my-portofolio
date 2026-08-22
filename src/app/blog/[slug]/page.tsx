@@ -3,15 +3,17 @@ import Image from "next/image";
 import { PageLayout } from "@/components/public/PageLayout";
 import { Container } from "@/components/public/Container";
 import { Badge } from "@/components/ui/Badge";
-import { ArrowLeft, Calendar, List } from "lucide-react";
+import { ArrowLeft, Calendar } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeSlug from "rehype-slug";
 import { notFound } from "next/navigation";
 import { formatDate } from "@/lib/utils";
 import { blogsApi } from "@/lib/api";
 import type { Metadata } from "next";
 import { SITE_CONFIG } from "@/constants/site";
 import { BlogMetrics } from "@/components/public/blog/BlogMetrics";
+import { TableOfContents } from "@/components/public/blog/TableOfContents";
 
 export const revalidate = 60; // ISR: Cache akan diperbarui maksimal setiap 60 detik
 
@@ -130,8 +132,14 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
             </div>
 
             {/* Markdown Content Parser */}
-            <article className="prose prose-slate dark:prose-invert prose-headings:font-display prose-a:text-accent hover:prose-a:text-accent-hover prose-img:rounded-xl max-w-none">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            <article 
+              id="blog-content" 
+              className="prose prose-slate dark:prose-invert prose-headings:font-display prose-a:text-accent hover:prose-a:text-accent-hover prose-img:rounded-xl max-w-none"
+            >
+              <ReactMarkdown 
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeSlug]}
+              >
                 {blog.contentMarkdown || ""}
               </ReactMarkdown>
             </article>
@@ -140,17 +148,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
           {/* Sidebar (TOC & Tags) */}
           <aside className="lg:col-span-4 sticky top-24 flex flex-col gap-8">
             {/* Table of Contents */}
-            <div className="bg-background-elevated border border-border rounded-xl p-6">
-              <h3 className="font-display text-caption font-bold text-foreground flex items-center gap-2 mb-4 uppercase tracking-wider">
-                <List size={16} className="text-accent" />
-                Daftar Isi
-              </h3>
-              <nav className="flex flex-col gap-2.5 text-xs text-foreground-muted">
-                <a href="#" className="hover:text-accent hover:underline">1. Pengantar Utama</a>
-                <a href="#" className="hover:text-accent hover:underline">2. Penerapan TypeScript</a>
-                <a href="#" className="hover:text-accent hover:underline">3. Kesimpulan Akhir</a>
-              </nav>
-            </div>
+            <TableOfContents />
 
             {/* Tags */}
             <div className="bg-background-elevated border border-border rounded-xl p-6">
