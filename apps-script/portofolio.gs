@@ -28,11 +28,15 @@
 
 var scriptProperties = PropertiesService.getScriptProperties();
 
-var JWT_SECRET      = scriptProperties.getProperty('JWT_SECRET')      || 'portfolio-secret-key-ganti-ini';
-var ADMIN_USERNAME  = scriptProperties.getProperty('ADMIN_USERNAME')  || 'admin';
-var ADMIN_PASSWORD  = scriptProperties.getProperty('ADMIN_PASSWORD')  || 'admin123';
-var SPREADSHEET_ID  = scriptProperties.getProperty('SPREADSHEET_ID')  || '';
-var MEDIA_FOLDER_ID = scriptProperties.getProperty('MEDIA_FOLDER_ID') || '';
+var JWT_SECRET        = scriptProperties.getProperty('JWT_SECRET')        || 'portfolio-secret-key-ganti-ini';
+var ADMIN_USERNAME    = scriptProperties.getProperty('ADMIN_USERNAME')    || 'admin';
+var ADMIN_PASSWORD    = scriptProperties.getProperty('ADMIN_PASSWORD')    || 'admin123';
+var SPREADSHEET_ID    = scriptProperties.getProperty('SPREADSHEET_ID')    || '';
+var MEDIA_FOLDER_ID   = scriptProperties.getProperty('MEDIA_FOLDER_ID')   || '';
+// GitHub Repository Dispatch: triggers automatic redeploy when data changes.
+// Set these in GAS Project Settings → Script Properties.
+var GH_DISPATCH_TOKEN = scriptProperties.getProperty('GH_DISPATCH_TOKEN') || '';
+var GH_REPO           = scriptProperties.getProperty('GH_REPO')           || '';
 
 /** Mendapatkan instance Spreadsheet */
 function getDatabase() {
@@ -420,22 +424,30 @@ function handleUpsertSetting(payload) {
   if (!payload.key) throw new Error('Key wajib disertakan.');
   var all    = handleGetSettings();
   var exists = all.some(function(s) { return s.key === payload.key; });
-  return exists ? updateRow('Settings', payload.key, payload) : createRow('Settings', payload);
+  var result = exists ? updateRow('Settings', payload.key, payload) : createRow('Settings', payload);
+  scheduleDeploy();
+  return result;
 }
 
 // ── Skills ────────────────────────────────────────────────────────
 function handleGetSkills() { return readAllRows('Skills'); }
 function handleCreateSkill(p) {
   if (!p.name || !p.category) throw new Error('Nama dan Kategori wajib diisi.');
-  return createRow('Skills', p);
+  var result = createRow('Skills', p);
+  scheduleDeploy();
+  return result;
 }
 function handleUpdateSkill(p) {
   if (!p.id) throw new Error('ID skill wajib disertakan.');
-  return updateRow('Skills', p.id, p);
+  var result = updateRow('Skills', p.id, p);
+  scheduleDeploy();
+  return result;
 }
 function handleDeleteSkill(id) {
   if (!id) throw new Error('ID skill wajib disertakan.');
-  return deleteRow('Skills', id);
+  var result = deleteRow('Skills', id);
+  scheduleDeploy();
+  return result;
 }
 
 // ── Projects ──────────────────────────────────────────────────────
@@ -453,45 +465,63 @@ function handleCreateProject(p) {
   if (!p.title || !p.slug) throw new Error('Judul dan Slug wajib diisi.');
   var dup = handleGetProjects().some(function(x) { return x.slug === p.slug; });
   if (dup) throw new Error("Slug '" + p.slug + "' sudah digunakan.");
-  return createRow('Projects', p);
+  var result = createRow('Projects', p);
+  scheduleDeploy();
+  return result;
 }
 function handleUpdateProject(p) {
   if (!p.id) throw new Error('ID proyek wajib disertakan.');
-  return updateRow('Projects', p.id, p);
+  var result = updateRow('Projects', p.id, p);
+  scheduleDeploy();
+  return result;
 }
 function handleDeleteProject(id) {
   if (!id) throw new Error('ID proyek wajib disertakan.');
-  return deleteRow('Projects', id);
+  var result = deleteRow('Projects', id);
+  scheduleDeploy();
+  return result;
 }
 
 // ── Experiences ───────────────────────────────────────────────────
 function handleGetExperiences() { return readAllRows('Experiences'); }
 function handleCreateExperience(p) {
   if (!p.title || !p.organization || !p.type) throw new Error('Judul, Organisasi, dan Tipe wajib diisi.');
-  return createRow('Experiences', p);
+  var result = createRow('Experiences', p);
+  scheduleDeploy();
+  return result;
 }
 function handleUpdateExperience(p) {
   if (!p.id) throw new Error('ID pengalaman wajib disertakan.');
-  return updateRow('Experiences', p.id, p);
+  var result = updateRow('Experiences', p.id, p);
+  scheduleDeploy();
+  return result;
 }
 function handleDeleteExperience(id) {
   if (!id) throw new Error('ID pengalaman wajib disertakan.');
-  return deleteRow('Experiences', id);
+  var result = deleteRow('Experiences', id);
+  scheduleDeploy();
+  return result;
 }
 
 // ── Certificates ──────────────────────────────────────────────────
 function handleGetCertificates() { return readAllRows('Certificates'); }
 function handleCreateCertificate(p) {
   if (!p.title || !p.issuer) throw new Error('Judul dan Penerbit wajib diisi.');
-  return createRow('Certificates', p);
+  var result = createRow('Certificates', p);
+  scheduleDeploy();
+  return result;
 }
 function handleUpdateCertificate(p) {
   if (!p.id) throw new Error('ID sertifikat wajib disertakan.');
-  return updateRow('Certificates', p.id, p);
+  var result = updateRow('Certificates', p.id, p);
+  scheduleDeploy();
+  return result;
 }
 function handleDeleteCertificate(id) {
   if (!id) throw new Error('ID sertifikat wajib disertakan.');
-  return deleteRow('Certificates', id);
+  var result = deleteRow('Certificates', id);
+  scheduleDeploy();
+  return result;
 }
 
 // ── Blogs ─────────────────────────────────────────────────────────
@@ -520,30 +550,42 @@ function handleCreateBlog(p) {
   var dup = handleGetBlogs().some(function(b) { return b.slug === p.slug; });
   if (dup) throw new Error("Slug '" + p.slug + "' sudah digunakan.");
   p.views = 0;
-  return createRow('Blogs', p);
+  var result = createRow('Blogs', p);
+  scheduleDeploy();
+  return result;
 }
 function handleUpdateBlog(p) {
   if (!p.id) throw new Error('ID blog wajib disertakan.');
-  return updateRow('Blogs', p.id, p);
+  var result = updateRow('Blogs', p.id, p);
+  scheduleDeploy();
+  return result;
 }
 function handleDeleteBlog(id) {
   if (!id) throw new Error('ID blog wajib disertakan.');
-  return deleteRow('Blogs', id);
+  var result = deleteRow('Blogs', id);
+  scheduleDeploy();
+  return result;
 }
 
 // ── Testimonials ──────────────────────────────────────────────────
 function handleGetTestimonials() { return readAllRows('Testimonials'); }
 function handleCreateTestimonial(p) {
   if (!p.authorName || !p.content) throw new Error('Nama dan Konten wajib diisi.');
-  return createRow('Testimonials', p);
+  var result = createRow('Testimonials', p);
+  scheduleDeploy();
+  return result;
 }
 function handleUpdateTestimonial(p) {
   if (!p.id) throw new Error('ID testimonial wajib disertakan.');
-  return updateRow('Testimonials', p.id, p);
+  var result = updateRow('Testimonials', p.id, p);
+  scheduleDeploy();
+  return result;
 }
 function handleDeleteTestimonial(id) {
   if (!id) throw new Error('ID testimonial wajib disertakan.');
-  return deleteRow('Testimonials', id);
+  var result = deleteRow('Testimonials', id);
+  scheduleDeploy();
+  return result;
 }
 
 // ── Messages ──────────────────────────────────────────────────────
@@ -619,5 +661,96 @@ function testConnection() {
     Logger.log('✅ Koneksi berhasil. Sheet tersedia: ' + sheets.join(', '));
   } catch (e) {
     Logger.log('❌ Koneksi gagal: ' + e.message);
+  }
+}
+
+
+// ============================================================
+// SECTION 9: GITHUB ACTIONS AUTO-DEPLOY TRIGGER
+// ============================================================
+
+/**
+ * Debounce guard: mencegah trigger deployment duplikat ketika beberapa
+ * operasi CRUD dijalankan dalam satu sesi singkat.
+ *
+ * Cara kerja:
+ * - Setiap kali scheduleDeploy() dipanggil, ia mencatat timestamp sekarang
+ *   ke Script Properties (key: 'DEPLOY_PENDING_AT').
+ * - Setelah 3 detik delay (Utilities.sleep), ia mengecek apakah timestamp
+ *   tersebut masih miliknya. Jika ya → kirim trigger ke GitHub.
+ *   Jika sudah digantikan oleh panggilan scheduleDeploy() yang lebih baru
+ *   → lewati (panggilan yang lebih baru yang akan mengirim trigger).
+ *
+ * Hasilnya: walaupun 5 baris diedit secara cepat, GitHub Actions hanya
+ * dipicu 1 kali — untuk efisiensi penggunaan GitHub Actions minutes.
+ */
+function scheduleDeploy() {
+  if (!GH_DISPATCH_TOKEN || !GH_REPO) {
+    Logger.log('ℹ️  Auto-deploy dilewati: GH_DISPATCH_TOKEN atau GH_REPO belum diatur di Script Properties.');
+    return;
+  }
+  var myTimestamp = String(Date.now());
+  scriptProperties.setProperty('DEPLOY_PENDING_AT', myTimestamp);
+  // Singkat delay agar CRUD batch tidak memicu banyak deployment.
+  Utilities.sleep(3000);
+  var latest = scriptProperties.getProperty('DEPLOY_PENDING_AT');
+  if (latest !== myTimestamp) {
+    // Panggilan scheduleDeploy() yang lebih baru sudah mengambil alih.
+    return;
+  }
+  // Hapus flag sebelum kirim agar tidak terpicu lagi jika GAS retry.
+  scriptProperties.deleteProperty('DEPLOY_PENDING_AT');
+  triggerGitHubDeploy();
+}
+
+/**
+ * Mengirim Repository Dispatch event ke GitHub API untuk memicu
+ * workflow 'Deploy to GitHub Pages' secara otomatis.
+ *
+ * Prasyarat (atur di GAS Project Settings → Script Properties):
+ *   GH_DISPATCH_TOKEN  — GitHub Personal Access Token (scope: workflow)
+ *   GH_REPO            — Nama repo, contoh: MuhammadBayuNugroho/my-portofolio
+ *
+ * Event type yang dikirim: 'data-updated'
+ * Workflow yang merespons: .github/workflows/deploy.yml
+ *   (harus ada trigger: repository_dispatch: types: [data-updated])
+ *
+ * Jalankan triggerGitHubDeploy() manual dari editor GAS untuk verifikasi.
+ */
+function triggerGitHubDeploy() {
+  if (!GH_DISPATCH_TOKEN || !GH_REPO) {
+    Logger.log('⚠️  triggerGitHubDeploy: GH_DISPATCH_TOKEN atau GH_REPO kosong. Deployment tidak dikirim.');
+    return;
+  }
+  var url = 'https://api.github.com/repos/' + GH_REPO + '/dispatches';
+  var payload = JSON.stringify({
+    event_type:     'data-updated',
+    client_payload: {
+      triggered_by: 'google-apps-script',
+      timestamp:    new Date().toISOString()
+    }
+  });
+  var options = {
+    method:             'post',
+    contentType:        'application/json',
+    headers: {
+      'Authorization': 'Bearer ' + GH_DISPATCH_TOKEN,
+      'Accept':        'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28'
+    },
+    payload:            payload,
+    muteHttpExceptions: true
+  };
+  try {
+    var response = UrlFetchApp.fetch(url, options);
+    var code     = response.getResponseCode();
+    if (code === 204) {
+      Logger.log('✅ GitHub deploy trigger berhasil dikirim ke ' + GH_REPO);
+    } else {
+      Logger.log('⚠️  GitHub API response ' + code + ': ' + response.getContentText());
+    }
+  } catch (e) {
+    // Fire-and-forget: jangan throw agar CRUD tetap berhasil meski trigger gagal.
+    Logger.log('❌ Gagal mengirim GitHub deploy trigger: ' + e.message);
   }
 }

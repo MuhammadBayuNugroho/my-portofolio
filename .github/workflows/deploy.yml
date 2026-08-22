@@ -5,6 +5,10 @@ on:
     branches:
       - main
   workflow_dispatch:
+  # Triggered by Google Apps Script after every CRUD mutation (create/update/delete).
+  # GAS calls POST /repos/{owner}/{repo}/dispatches with event_type: "data-updated".
+  repository_dispatch:
+    types: [data-updated]
 
 permissions:
   contents: read
