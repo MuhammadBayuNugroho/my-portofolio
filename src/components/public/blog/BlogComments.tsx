@@ -226,7 +226,7 @@ export function BlogComments({ slug }: BlogCommentsProps) {
           <Button
             type="submit"
             variant="primary"
-            className="w-full sm:w-auto min-w-[120px] transition-all cursor-pointer font-semibold text-xs"
+            className="w-full sm:w-auto min-w-[120px] transition-all cursor-pointer font-semibold text-xs !bg-accent !text-white hover:!bg-accent-hover !opacity-100 disabled:!opacity-60"
             disabled={isSubmitting}
           >
             {isSubmitting ? (

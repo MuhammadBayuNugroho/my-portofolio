@@ -58,16 +58,16 @@ export function ShareButton({ title }: ShareButtonProps) {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "inline-flex items-center gap-2 px-4 py-2 rounded-full border text-caption font-medium transition-all cursor-pointer select-none",
+          "inline-flex items-center gap-2 px-4 py-2 rounded-full border text-caption font-semibold transition-all cursor-pointer select-none",
           isOpen
-            ? "bg-accent/10 border-accent/25 text-accent hover:bg-accent/20"
-            : "bg-background-elevated border-border text-foreground hover:bg-background-overlay hover:border-zinc-400 dark:hover:border-zinc-500"
+            ? "bg-accent text-white border-accent hover:bg-accent-hover"
+            : "bg-accent text-white border-accent hover:bg-accent-hover shadow-sm"
         )}
         aria-expanded={isOpen}
         aria-haspopup="true"
         aria-label="Bagikan artikel ini"
       >
-        <Share2 size={16} className="text-foreground-muted" />
+        <Share2 size={16} className="text-white/90" />
         <span>Bagikan</span>
       </button>
 
