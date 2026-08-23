@@ -12,12 +12,11 @@ interface BlogMetricsProps {
 }
 
 export function BlogMetrics({ slug, initialViews, contentMarkdown }: BlogMetricsProps) {
-  // Fetch real-time views from the API
   const { data } = useSWR(`blog-${slug}`, async () => {
     const res = await blogsApi.getBySlug(slug);
-    return { views: res.data?.views ?? initialViews };
+    return res.data || {};
   }, { 
-    fallbackData: { views: initialViews },
+    fallbackData: { views: initialViews } as any,
     refreshInterval: 60000 // refresh every 1 min
   });
 

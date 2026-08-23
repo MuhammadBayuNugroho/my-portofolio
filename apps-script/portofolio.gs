@@ -87,6 +87,7 @@ function doGet(e) {
       case 'get_certificates': data = handleGetCertificates(); break;
       case 'get_blogs':        data = handleGetBlogs(); break;
       case 'get_blog_by_slug': data = handleGetBlogBySlug(e.parameter.slug); break;
+      case 'get_comments':     data = handleGetComments(e.parameter.slug); break;
       case 'get_testimonials': data = handleGetTestimonials(); break;
       default:
         throw new Error("Action GET '" + action + "' tidak dikenali.");
@@ -128,6 +129,14 @@ function doPost(e) {
 
     if (action === 'send_message') {
       return jsonResponse(true, handleSendMessage(payload), 'Pesan terkirim.');
+    }
+
+    if (action === 'create_comment') {
+      return jsonResponse(true, handleCreateComment(payload), 'Komentar terkirim.');
+    }
+
+    if (action === 'like_blog') {
+      return jsonResponse(true, handleLikeBlog(payload), 'Tindakan suka berhasil.');
     }
 
     // ── CRUD — wajib token valid ──────────────────────────────────
@@ -350,9 +359,10 @@ function initDatabase() {
     'Projects':     ['id', 'title', 'slug', 'description', 'contentMarkdown', 'coverImage', 'images', 'techStack', 'projectUrl', 'githubUrl', 'figmaUrl', 'category', 'isGalleryOnly', 'status', 'featured', 'order', 'createdAt', 'updatedAt'],
     'Experiences':  ['id', 'title', 'organization', 'location', 'startDate', 'endDate', 'isCurrent', 'description', 'highlights', 'type', 'logoUrl', 'link', 'createdAt', 'updatedAt'],
     'Certificates': ['id', 'title', 'issuer', 'category', 'issueDate', 'expiryDate', 'credentialId', 'credentialUrl', 'imageUrl', 'description', 'status', 'featured', 'createdAt', 'updatedAt'],
-    'Blogs':        ['id', 'title', 'slug', 'excerpt', 'contentMarkdown', 'coverImage', 'tags', 'category', 'status', 'views', 'readingTime', 'featured', 'createdAt', 'updatedAt'],
+    'Blogs':        ['id', 'title', 'slug', 'excerpt', 'contentMarkdown', 'coverImage', 'tags', 'category', 'status', 'views', 'readingTime', 'featured', 'likes', 'createdAt', 'updatedAt'],
     'Testimonials': ['id', 'authorName', 'authorRole', 'authorOrganization', 'authorImageUrl', 'content', 'rating', 'relation', 'projectId', 'status', 'featured', 'createdAt', 'updatedAt'],
-    'Messages':     ['id', 'senderName', 'senderEmail', 'subject', 'message', 'isRead', 'isReplied', 'ipAddress', 'createdAt']
+    'Messages':     ['id', 'senderName', 'senderEmail', 'subject', 'message', 'isRead', 'isReplied', 'ipAddress', 'createdAt'],
+    'Comments':     ['id', 'blogSlug', 'authorName', 'authorEmail', 'content', 'status', 'createdAt', 'updatedAt']
   };
 
   for (var name in schemas) {
@@ -362,6 +372,14 @@ function initDatabase() {
     if (sheet.getLastRow() === 0) {
       sheet.appendRow(schemas[name]);
       isNew = true;
+    } else {
+      // Menambahkan kolom baru secara dinamis jika belum ada di sheet yang sudah ada
+      var currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+      var missingHeaders = schemas[name].filter(function(h) { return currentHeaders.indexOf(h) === -1; });
+      if (missingHeaders.length > 0) {
+        var newHeaders = currentHeaders.concat(missingHeaders);
+        sheet.getRange(1, 1, 1, newHeaders.length).setValues([newHeaders]);
+      }
     }
     if (isNew) insertDummyData(name, sheet);
   }
@@ -753,4 +771,61 @@ function triggerGitHubDeploy() {
     // Fire-and-forget: jangan throw agar CRUD tetap berhasil meski trigger gagal.
     Logger.log('❌ Gagal mengirim GitHub deploy trigger: ' + e.message);
   }
+}
+
+// ── Comments Handler ────────────────────────────────────────────────
+function handleGetComments(slug) {
+  if (!slug) throw new Error('Slug wajib disertakan.');
+  var all = readAllRows('Comments');
+  var filtered = all.filter(function(c) {
+    return c.blogSlug === slug && c.status === 'Approved';
+  });
+  return filtered.sort(function(a, b) {
+    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+  });
+}
+
+function handleCreateComment(payload) {
+  if (!payload.blogSlug || !payload.authorName || !payload.authorEmail || !payload.content) {
+    throw new Error('blogSlug, authorName, authorEmail, dan content wajib disertakan.');
+  }
+  
+  // Pastikan blog dengan slug tersebut memang ada
+  var blogs = handleGetBlogs();
+  var blogExists = blogs.some(function(b) { return b.slug === payload.blogSlug; });
+  if (!blogExists) throw new Error("Blog dengan slug '" + payload.blogSlug + "' tidak ditemukan.");
+
+  payload.status = payload.status || 'Approved'; // Auto-approve komentar secara default
+  
+  var result = createRow('Comments', payload);
+  return result;
+}
+
+// ── Likes Handler ───────────────────────────────────────────────────
+function handleLikeBlog(payload) {
+  var slug = payload.slug;
+  var action = payload.action || 'like'; // 'like' atau 'unlike'
+  if (!slug) throw new Error('Slug wajib disertakan.');
+  
+  var db    = getDatabase();
+  var sheet = db.getSheetByName('Blogs');
+  var values = sheet.getDataRange().getValues();
+  var headers = values[0];
+  var slugIdx  = headers.indexOf('slug');
+  var likesIdx = headers.indexOf('likes');
+  
+  if (likesIdx === -1) {
+    throw new Error('Kolom likes tidak ditemukan. Silakan jalankan initDatabase terlebih dahulu.');
+  }
+
+  for (var i = 1; i < values.length; i++) {
+    if (values[i][slugIdx] === slug) {
+      var currentLikes = Number(values[i][likesIdx]) || 0;
+      var diff = action === 'unlike' ? -1 : 1;
+      var newLikes = Math.max(0, currentLikes + diff);
+      sheet.getRange(i + 1, likesIdx + 1).setValue(newLikes);
+      return { slug: slug, likes: newLikes };
+    }
+  }
+  throw new Error("Blog dengan slug '" + slug + "' tidak ditemukan.");
 }

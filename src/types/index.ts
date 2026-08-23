@@ -187,7 +187,20 @@ export interface Blog extends BaseEntity {
   views: number;
   readingTime?: number;    // Auto-calculated in minutes
   featured: boolean;
+  likes?: number;          // Likes count
 }
+
+export interface BlogComment {
+  id: string;
+  blogSlug: string;
+  authorName: string;
+  authorEmail: string;
+  content: string;
+  status: string;          // 'Approved' | 'Pending'
+  createdAt: string;
+  updatedAt: string;
+}
+
 
 // ─────────────────────────────────────────────────────────────────
 // TESTIMONIAL MODULE

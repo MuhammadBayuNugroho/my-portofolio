@@ -14,6 +14,9 @@ import type { Metadata } from "next";
 import { SITE_CONFIG } from "@/constants/site";
 import { BlogMetrics } from "@/components/public/blog/BlogMetrics";
 import { TableOfContents } from "@/components/public/blog/TableOfContents";
+import { LikeButton } from "@/components/public/blog/LikeButton";
+import { ShareButton } from "@/components/public/blog/ShareButton";
+import { BlogComments } from "@/components/public/blog/BlogComments";
 
 export const revalidate = 60; // ISR: Cache akan diperbarui maksimal setiap 60 detik
 
@@ -143,6 +146,15 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
                 {blog.contentMarkdown || ""}
               </ReactMarkdown>
             </article>
+
+            {/* Interaksi Blog: Sukai & Bagikan */}
+            <div className="flex flex-wrap items-center gap-3 py-5 border-y border-border/80 my-8">
+              <LikeButton slug={blog.slug} initialLikes={blog.likes || 0} />
+              <ShareButton title={blog.title} />
+            </div>
+
+            {/* Kolom Komentar */}
+            <BlogComments slug={blog.slug} />
           </div>
 
           {/* Sidebar (TOC & Tags) */}

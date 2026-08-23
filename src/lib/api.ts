@@ -19,6 +19,7 @@
 import type {
   Project,
   Blog,
+  BlogComment,
   Skill,
   Experience,
   Certificate,
@@ -524,6 +525,74 @@ export const blogsApi = {
       return res;
     }
     return simulateNetwork({ deleted: true, id });
+  },
+
+  like: async (slug: string, action: "like" | "unlike"): Promise<ApiResponse<{ slug: string; likes: number }>> => {
+    if (IS_REAL_API) {
+      return apiFetch<{ slug: string; likes: number }>("like_blog", {
+        method: "POST",
+        body: { slug, action },
+      });
+    }
+    return simulateNetwork({ slug, likes: 10 });
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────
+// COMMENTS API
+// ─────────────────────────────────────────────────────────────────
+export const commentsApi = {
+  getByBlogSlug: async (slug: string): Promise<ApiResponse<BlogComment[]>> => {
+    if (IS_REAL_API) {
+      return apiFetch<BlogComment[]>(`get_comments&slug=${encodeURIComponent(slug)}`);
+    }
+    // Dummy simulator comments fallback
+    return simulateNetwork([
+      {
+        id: "com_1",
+        blogSlug: slug,
+        authorName: "John Doe",
+        authorEmail: "john@example.com",
+        content: "Artikel yang luar biasa! Sangat membantu saya memahami Next.js lebih dalam.",
+        status: "Approved",
+        createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
+        updatedAt: new Date(Date.now() - 3600000 * 24).toISOString(),
+      },
+      {
+        id: "com_2",
+        blogSlug: slug,
+        authorName: "Jane Smith",
+        authorEmail: "jane@example.com",
+        content: "Penjelasannya sangat bersih dan mudah diikuti. Ditunggu kelanjutannya!",
+        status: "Approved",
+        createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
+        updatedAt: new Date(Date.now() - 3600000 * 2).toISOString(),
+      }
+    ]);
+  },
+
+  create: async (data: {
+    blogSlug: string;
+    authorName: string;
+    authorEmail: string;
+    content: string;
+  }): Promise<ApiResponse<BlogComment>> => {
+    if (IS_REAL_API) {
+      return apiFetch<BlogComment>("create_comment", {
+        method: "POST",
+        body: data,
+      });
+    }
+    return simulateNetwork({
+      id: `com_${Date.now()}`,
+      blogSlug: data.blogSlug,
+      authorName: data.authorName,
+      authorEmail: data.authorEmail,
+      content: data.content,
+      status: "Approved",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
   },
 };
 
