@@ -786,9 +786,12 @@ function handleGetComments(slug) {
 }
 
 function handleCreateComment(payload) {
-  if (!payload.blogSlug || !payload.authorName || !payload.authorEmail || !payload.content) {
-    throw new Error('blogSlug, authorName, authorEmail, dan content wajib disertakan.');
+  if (!payload.blogSlug || !payload.authorName || !payload.content) {
+    throw new Error('blogSlug, authorName, dan content wajib disertakan.');
   }
+  
+  // Email opsional
+  payload.authorEmail = payload.authorEmail || '';
   
   // Pastikan blog dengan slug tersebut memang ada
   var blogs = handleGetBlogs();

@@ -73,9 +73,7 @@ export function BlogComments({ slug }: BlogCommentsProps) {
     if (!formData.authorName.trim()) {
       newErrors.authorName = "Nama lengkap wajib diisi";
     }
-    if (!formData.authorEmail.trim()) {
-      newErrors.authorEmail = "Email wajib diisi";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.authorEmail)) {
+    if (formData.authorEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.authorEmail)) {
       newErrors.authorEmail = "Format email tidak valid";
     }
     if (!formData.content.trim()) {
@@ -194,14 +192,13 @@ export function BlogComments({ slug }: BlogCommentsProps) {
           <Input
             id="authorEmail"
             name="authorEmail"
-            label="Email (tidak akan dipublikasikan)"
+            label="Email (opsional, tidak dipublikasikan)"
             placeholder="Contoh: john@example.com"
             type="email"
             value={formData.authorEmail}
             onChange={handleChange}
             error={errors.authorEmail}
             disabled={isSubmitting}
-            required
           />
         </div>
 
