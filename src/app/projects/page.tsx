@@ -21,15 +21,19 @@ export default function ProjectsPage() {
   const [projectSearch, setProjectSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<ProjectCategory | "All">("All");
 
-  const existingCategories = React.useMemo(() => {
-    const cats = [...new Set(projects.map((p) => p.category))];
-    return ["All", ...cats];
+  const publishedProjects = React.useMemo(() => {
+    return projects.filter((p) => p.status === "Published");
   }, [projects]);
+
+  const existingCategories = React.useMemo(() => {
+    const cats = [...new Set(publishedProjects.map((p) => p.category))];
+    return ["All", ...cats];
+  }, [publishedProjects]);
 
   const [selectedGalleryItem, setSelectedGalleryItem] = useState<Project | null>(null);
 
   // Filtering Logic
-  const filteredProjects = projects.filter((project) => {
+  const filteredProjects = publishedProjects.filter((project) => {
     const matchesSearch =
       project.title.toLowerCase().includes(projectSearch.toLowerCase()) ||
       project.description.toLowerCase().includes(projectSearch.toLowerCase()) ||

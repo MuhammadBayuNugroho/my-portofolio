@@ -53,7 +53,7 @@ export async function generateMetadata({ params }: ProjectDetailPageProps): Prom
 export async function generateStaticParams() {
   try {
     const res = await projectsApi.getAll();
-    const items = res.data || [];
+    const items = (res.data || []).filter((p) => p.status === "Published");
     if (items.length === 0) {
       return [{ slug: "placeholder-project" }];
     }
@@ -73,14 +73,14 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
 
   try {
     const res = await projectsApi.getBySlug(slug);
-    if (res.success && res.data) {
+    if (res.success && res.data && res.data.status === "Published") {
       project = res.data;
     }
   } catch {
     notFound();
   }
 
-  if (!project) {
+  if (!project || project.status !== "Published") {
     notFound();
   }
 
@@ -88,7 +88,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
     const allProjRes = await projectsApi.getAll();
     if (allProjRes.success && allProjRes.data) {
       relatedProjects = allProjRes.data.filter(
-        (p) => p.category === project.category && p.id !== project.id
+        (p) => p.status === "Published" && p.category === project.category && p.id !== project.id
       ).slice(0, 3);
     }
   } catch {

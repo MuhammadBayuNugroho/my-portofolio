@@ -17,11 +17,14 @@ export function BlogPageClient() {
     blogsApi.getAll().then((res) => res.data || [])
   );
 
-  // Extract all unique tags
-  const allTags = ["All", ...Array.from(new Set((blogs || []).flatMap((blog) => blog.tags || [])))];
+  // Filter only published blogs for public view
+  const publishedBlogs = (blogs || []).filter((blog) => blog.status === "Published");
+
+  // Extract all unique tags from published blogs
+  const allTags = ["All", ...Array.from(new Set(publishedBlogs.flatMap((blog) => blog.tags || [])))];
 
   // Filtering Logic
-  const filteredBlogs = blogs.filter((blog) => {
+  const filteredBlogs = publishedBlogs.filter((blog) => {
     const matchesSearch =
       blog.title.toLowerCase().includes(search.toLowerCase()) ||
       blog.excerpt.toLowerCase().includes(search.toLowerCase());

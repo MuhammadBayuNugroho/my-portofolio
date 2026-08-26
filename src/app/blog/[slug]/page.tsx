@@ -58,7 +58,7 @@ export async function generateMetadata({ params }: BlogDetailPageProps): Promise
 export async function generateStaticParams() {
   try {
     const res = await blogsApi.getAll();
-    const items = res.data || [];
+    const items = (res.data || []).filter((blog) => blog.status === "Published");
     if (items.length === 0) {
       return [{ slug: "placeholder-blog" }];
     }
@@ -76,14 +76,14 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
   let blog = null;
   try {
     const res = await blogsApi.getBySlug(slug);
-    if (res.success && res.data) {
+    if (res.success && res.data && res.data.status === "Published") {
       blog = res.data;
     }
   } catch {
     notFound();
   }
 
-  if (!blog) {
+  if (!blog || blog.status !== "Published") {
     notFound();
   }
 

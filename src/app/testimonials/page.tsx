@@ -18,13 +18,17 @@ export default function TestimonialsPage() {
     testimonialsApi.getAll().then((res) => res.data || [])
   );
 
-  const relations = useMemo(() => {
-    const rels = [...new Set(testimonials.map((t) => t.relation))].filter(Boolean) as string[];
-    return ["All", ...rels];
+  const publishedTestimonials = useMemo(() => {
+    return testimonials.filter((t) => t.status === "Published");
   }, [testimonials]);
 
+  const relations = useMemo(() => {
+    const rels = [...new Set(publishedTestimonials.map((t) => t.relation))].filter(Boolean) as string[];
+    return ["All", ...rels];
+  }, [publishedTestimonials]);
+
   // Filtering Logic
-  const filteredTestimonials = testimonials.filter((t) => {
+  const filteredTestimonials = publishedTestimonials.filter((t) => {
     return activeRelation === "All" || t.relation === activeRelation;
   });
 
