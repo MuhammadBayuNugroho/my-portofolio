@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { testimonialsApi, mediaApi } from "@/lib/api";
-import type { Testimonial, TestimonialRelation } from "@/types";
+import type { Testimonial, TestimonialRelation, ContentStatus } from "@/types";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Modal, Input, Textarea } from "@/components/ui";
@@ -28,7 +28,7 @@ export default function AdminTestimonialsPage() {
   const [rating, setRating] = useState(5);
   const [relation, setRelation] = useState<TestimonialRelation>("Client");
   const [projectId, setProjectId] = useState("");
-  const [status, setStatus] = useState<"Published" | "Draft" | "Archived">("Published");
+  const [status, setStatus] = useState<ContentStatus>("Published");
   const [featured, setFeatured] = useState(false);
   const [order, setOrder] = useState<number>(0);
   const [isSaving, setIsSaving] = useState(false);

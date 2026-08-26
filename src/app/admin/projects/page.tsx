@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { projectsApi, mediaApi } from "@/lib/api";
-import type { Project } from "@/types";
+import type { Project, ContentStatus } from "@/types";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Modal, Input, Textarea } from "@/components/ui";
@@ -79,7 +79,7 @@ export default function AdminProjectsPage() {
   const [figmaUrl, setFigmaUrl] = useState("");
   const [category, setCategory] = useState("");
   const [isGalleryOnly, setIsGalleryOnly] = useState(false);
-  const [status, setStatus] = useState<"Published" | "Draft" | "Archived">("Published");
+  const [status, setStatus] = useState<ContentStatus>("Published");
   const [featured, setFeatured] = useState(false);
   const [order, setOrder] = useState(1);
   const [techInput, setTechInput] = useState("");

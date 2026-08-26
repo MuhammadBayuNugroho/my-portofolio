@@ -359,7 +359,7 @@ function initDatabase() {
     'Projects':     ['id', 'title', 'slug', 'description', 'contentMarkdown', 'coverImage', 'images', 'techStack', 'projectUrl', 'githubUrl', 'figmaUrl', 'category', 'isGalleryOnly', 'status', 'featured', 'order', 'createdAt', 'updatedAt'],
     'Experiences':  ['id', 'title', 'organization', 'location', 'startDate', 'endDate', 'isCurrent', 'description', 'highlights', 'type', 'logoUrl', 'link', 'createdAt', 'updatedAt'],
     'Certificates': ['id', 'title', 'issuer', 'category', 'issueDate', 'expiryDate', 'credentialId', 'credentialUrl', 'imageUrl', 'description', 'status', 'featured', 'createdAt', 'updatedAt'],
-    'Blogs':        ['id', 'title', 'slug', 'excerpt', 'contentMarkdown', 'coverImage', 'tags', 'category', 'status', 'views', 'readingTime', 'featured', 'likes', 'createdAt', 'updatedAt'],
+    'Blogs':        ['id', 'title', 'slug', 'excerpt', 'contentMarkdown', 'coverImage', 'tags', 'category', 'status', 'views', 'readingTime', 'featured', 'likes', 'scheduledAt', 'createdAt', 'updatedAt'],
     'Testimonials': ['id', 'authorName', 'authorRole', 'authorOrganization', 'authorImageUrl', 'content', 'rating', 'relation', 'projectId', 'status', 'featured', 'createdAt', 'updatedAt'],
     'Messages':     ['id', 'senderName', 'senderEmail', 'subject', 'message', 'isRead', 'isReplied', 'ipAddress', 'createdAt'],
     'Comments':     ['id', 'blogSlug', 'authorName', 'authorEmail', 'content', 'status', 'createdAt', 'updatedAt']
@@ -771,6 +771,102 @@ function triggerGitHubDeploy() {
     // Fire-and-forget: jangan throw agar CRUD tetap berhasil meski trigger gagal.
     Logger.log('❌ Gagal mengirim GitHub deploy trigger: ' + e.message);
   }
+}
+
+
+// ============================================================
+// SECTION 10: SCHEDULED POST AUTO-PUBLISHER
+// ============================================================
+
+/**
+ * checkScheduledPosts — Dipanggil oleh GAS Time-based Trigger setiap jam.
+ *
+ * Alur:
+ * 1. Baca semua blog dengan status 'Scheduled'.
+ * 2. Jika scheduledAt <= waktu sekarang → ubah status ke 'Published'.
+ * 3. Jika ada yang berubah → panggil triggerGitHubDeploy() untuk redeploy.
+ *
+ * Cara setup trigger (cukup SEKALI):
+ *   Jalankan fungsi setupScheduleTrigger() dari editor GAS.
+ */
+function checkScheduledPosts() {
+  var db    = getDatabase();
+  var sheet = db.getSheetByName('Blogs');
+  if (!sheet) {
+    Logger.log('⚠️  Sheet Blogs tidak ditemukan. checkScheduledPosts dilewati.');
+    return;
+  }
+
+  var values  = sheet.getDataRange().getValues();
+  var headers = values[0];
+  var statusIdx      = headers.indexOf('status');
+  var scheduledAtIdx = headers.indexOf('scheduledAt');
+  var updatedAtIdx   = headers.indexOf('updatedAt');
+
+  if (statusIdx === -1 || scheduledAtIdx === -1) {
+    Logger.log('⚠️  Kolom status atau scheduledAt tidak ditemukan. Jalankan initDatabase() terlebih dahulu.');
+    return;
+  }
+
+  var now        = new Date();
+  var published  = 0;
+
+  for (var i = 1; i < values.length; i++) {
+    var rowStatus      = values[i][statusIdx];
+    var rawScheduledAt = values[i][scheduledAtIdx];
+
+    if (rowStatus !== 'Scheduled' || !rawScheduledAt) continue;
+
+    var scheduledDate = new Date(rawScheduledAt);
+    if (isNaN(scheduledDate.getTime())) continue; // Nilai tidak valid, lewati
+
+    if (scheduledDate <= now) {
+      // Waktu publish telah tiba — ubah status ke Published
+      sheet.getRange(i + 1, statusIdx + 1).setValue('Published');
+      if (updatedAtIdx !== -1) {
+        sheet.getRange(i + 1, updatedAtIdx + 1).setValue(now.toISOString());
+      }
+      // Kosongkan scheduledAt agar tidak diproses ulang
+      sheet.getRange(i + 1, scheduledAtIdx + 1).setValue('');
+      published++;
+      Logger.log('✅ Blog row ' + (i + 1) + ' telah dipublish otomatis (scheduledAt: ' + rawScheduledAt + ')');
+    }
+  }
+
+  if (published > 0) {
+    Logger.log('🚀 ' + published + ' artikel dipublish. Memicu GitHub deploy...');
+    triggerGitHubDeploy();
+  } else {
+    Logger.log('ℹ️  Tidak ada artikel terjadwal yang siap publish pada ' + now.toISOString());
+  }
+}
+
+/**
+ * setupScheduleTrigger — Pasang time-based trigger untuk checkScheduledPosts.
+ *
+ * Jalankan fungsi ini SEKALI dari editor GAS (tombol Run).
+ * Trigger akan berjalan setiap jam secara otomatis selamanya.
+ *
+ * Untuk menghapus trigger: GAS → Edit → Current project's triggers.
+ */
+function setupScheduleTrigger() {
+  // Hapus trigger lama dengan nama yang sama agar tidak duplikat
+  var triggers = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === 'checkScheduledPosts') {
+      ScriptApp.deleteTrigger(triggers[i]);
+      Logger.log('🗑️  Trigger lama dihapus.');
+    }
+  }
+
+  // Pasang trigger baru: setiap 1 jam
+  ScriptApp.newTrigger('checkScheduledPosts')
+    .timeBased()
+    .everyHours(1)
+    .create();
+
+  Logger.log('✅ Time trigger berhasil dipasang: checkScheduledPosts akan berjalan setiap 1 jam.');
+  Logger.log('   Kelola trigger di: Edit → Current project\'s triggers.');
 }
 
 // ── Comments Handler ────────────────────────────────────────────────

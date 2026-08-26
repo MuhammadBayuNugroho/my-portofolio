@@ -15,7 +15,7 @@
 // ─────────────────────────────────────────────────────────────────
 
 /** Content status across all modules */
-export type ContentStatus = "Draft" | "Published" | "Archived";
+export type ContentStatus = "Draft" | "Published" | "Archived" | "Scheduled";
 
 /** API response wrapper */
 export interface ApiResponse<T> {
@@ -188,6 +188,8 @@ export interface Blog extends BaseEntity {
   readingTime?: number;    // Auto-calculated in minutes
   featured: boolean;
   likes?: number;          // Likes count
+  /** ISO string — only set when status is "Scheduled" */
+  scheduledAt?: string;
 }
 
 export interface BlogComment {

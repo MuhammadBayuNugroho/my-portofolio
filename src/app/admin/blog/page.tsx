@@ -3,12 +3,12 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { blogsApi, mediaApi } from "@/lib/api";
-import type { Blog } from "@/types";
+import type { Blog, ContentStatus } from "@/types";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Modal, Input, Textarea } from "@/components/ui";
 import { ImageUpload } from "@/components/admin/ImageUpload";
-import { Plus, Edit2, Trash2, Loader2 } from "lucide-react";
+import { Plus, Edit2, Trash2, Loader2, Clock } from "lucide-react";
 
 
 // ─── Flexible Category Input ────────────────────────────────────
@@ -74,7 +74,8 @@ export default function AdminBlogPage() {
   const [coverImage, setCoverImage] = useState("");
   const [tagsInput, setTagsInput] = useState("");
   const [category, setCategory] = useState("");
-  const [status, setStatus] = useState<"Published" | "Draft" | "Archived">("Published");
+  const [status, setStatus] = useState<ContentStatus>("Published");
+  const [scheduledAt, setScheduledAt] = useState("");
   const [featured, setFeatured] = useState(false);
   const [readingTime, setReadingTime] = useState(5);
   const [order, setOrder] = useState<number>(0);
@@ -114,6 +115,7 @@ export default function AdminBlogPage() {
     setTagsInput("");
     setCategory("");
     setStatus("Published");
+    setScheduledAt("");
     setFeatured(false);
     setReadingTime(5);
     setOrder(0);
@@ -130,6 +132,10 @@ export default function AdminBlogPage() {
     setTagsInput(blog.tags ? blog.tags.join(", ") : "");
     setCategory(blog.category || "Tech");
     setStatus(blog.status || "Published");
+    // Convert stored ISO string to datetime-local format ("YYYY-MM-DDTHH:mm")
+    setScheduledAt(
+      blog.scheduledAt ? blog.scheduledAt.slice(0, 16) : ""
+    );
     setFeatured(!!blog.featured);
     setReadingTime(blog.readingTime || 5);
     setOrder(blog.order || 0);
@@ -181,7 +187,7 @@ export default function AdminBlogPage() {
 
     const tags = tagsInput.split(",").map((t) => t.trim()).filter(Boolean);
 
-    const payload = {
+    const payload: Record<string, unknown> = {
       title,
       slug,
       excerpt,
@@ -193,6 +199,10 @@ export default function AdminBlogPage() {
       featured,
       readingTime: Number(readingTime),
       order: Number(order),
+      // Only include scheduledAt when status is Scheduled; clear it otherwise
+      scheduledAt: status === "Scheduled" && scheduledAt
+        ? new Date(scheduledAt).toISOString()
+        : "",
     };
 
     try {
@@ -247,7 +257,17 @@ export default function AdminBlogPage() {
               <div className="p-5 flex-1 flex flex-col justify-between">
                 <div>
                   <div className="flex justify-between items-start mb-2">
-                    <span className="text-[10px] text-foreground-subtle">{blog.status} • {blog.views} Views</span>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {blog.status === "Scheduled" ? (
+                        <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide bg-amber-400/15 text-amber-600 dark:text-amber-400 border border-amber-400/30 px-2 py-0.5 rounded-full">
+                          <Clock size={9} />
+                          Scheduled
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-foreground-subtle">{blog.status}</span>
+                      )}
+                      <span className="text-[10px] text-foreground-subtle">• {blog.views} Views</span>
+                    </div>
                     <div className="flex gap-2">
                       <button onClick={() => handleOpenEdit(blog)} className="text-foreground-subtle hover:text-foreground p-1 transition-colors">
                         <Edit2 size={14} />
@@ -258,6 +278,12 @@ export default function AdminBlogPage() {
                     </div>
                   </div>
                   <h4 className="font-display text-body font-bold text-foreground mb-1 leading-snug">{blog.title}</h4>
+                  {blog.status === "Scheduled" && blog.scheduledAt && (
+                    <p className="text-[10px] text-amber-600 dark:text-amber-400 flex items-center gap-1 mb-1">
+                      <Clock size={10} />
+                      Publish: {new Date(blog.scheduledAt).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })}
+                    </p>
+                  )}
                   <p className="text-xs text-foreground-muted line-clamp-2 mb-3">{blog.excerpt}</p>
                 </div>
                 <div className="border-t border-border/40 pt-3 flex flex-wrap gap-1 text-[10px] text-foreground-subtle">
@@ -357,15 +383,37 @@ export default function AdminBlogPage() {
               <label className="text-xs font-semibold text-foreground-muted select-none">Status</label>
               <select
                 value={status}
-                onChange={(e) => setStatus(e.target.value as "Published" | "Draft" | "Archived")}
+                onChange={(e) => setStatus(e.target.value as ContentStatus)}
                 className="w-full rounded-lg border border-[rgba(0,0,0,0.15)] dark:border-[rgba(255,255,255,0.15)] bg-background px-3 py-2.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent"
               >
                 <option value="Published">Published</option>
                 <option value="Draft">Draft</option>
+                <option value="Scheduled">🕐 Scheduled (Jadwalkan Publish)</option>
                 <option value="Archived">Archived</option>
               </select>
             </div>
           </div>
+
+          {/* Scheduled Date/Time Picker — only visible when status is Scheduled */}
+          {status === "Scheduled" && (
+            <div className="flex flex-col gap-2 p-4 rounded-xl border border-amber-400/30 bg-amber-400/5">
+              <label className="text-xs font-semibold text-amber-700 dark:text-amber-400 select-none">
+                🕐 Waktu Publish *
+                <span className="ml-1 text-[10px] font-normal text-foreground-subtle">(waktu lokal Anda)</span>
+              </label>
+              <input
+                type="datetime-local"
+                value={scheduledAt}
+                onChange={(e) => setScheduledAt(e.target.value)}
+                required={status === "Scheduled"}
+                min={new Date(Date.now() + 60_000).toISOString().slice(0, 16)}
+                className="w-full rounded-lg border border-amber-400/40 bg-background px-3.5 py-2.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400"
+              />
+              <p className="text-[10px] text-foreground-subtle">
+                Artikel akan otomatis dipublish pada waktu yang dipilih. GAS time trigger berjalan setiap jam.
+              </p>
+            </div>
+          )}
 
           {/* Featured & Reading Time/Order */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-5 bg-background-overlay/60 rounded-xl border border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)]">
